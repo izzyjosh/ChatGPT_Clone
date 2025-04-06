@@ -14,8 +14,8 @@ export default {
       accentbg: "#4B4F5B",
       accenttext: "#868FA7",
 
-      /*Functional Colors*/
       teal: "#10A37F",
+      /*Functional Colors*/
       mint: "#D2F4EA",
       charcoal: "#2B2C2F",
       darkgray: "#3E4147",
