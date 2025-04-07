@@ -5,29 +5,28 @@ export default {
     colors: {
       transparent: "transparent",
       current: "currentColor",
+      white: "#FFFFFF",
+      light: "#F4F4F4",
+      prlight: "#EEEEEE",
+      seclight: "#D6D6D6",
+      tetlight: "#F5F5F5",
+      yellow: "#FEC553",
       green: "#10A37F",
+      mint: "#D8EFE9",
+      darkmint:"#B0D7CD",
       black: "#1E1F22",
-      bglight: "#F5F5F5",
-      secdark: "#282A2E",
-      tetdark: "#3F424A",
-      softgray: "#ABABAB",
-      accentbg: "#4B4F5B",
-      accenttext: "#868FA7",
-
-      teal: "#10A37F",
-      /*Functional Colors*/
-      mint: "#D2F4EA",
-      charcoal: "#2B2C2F",
-      darkgray: "#3E4147",
-      gray: "#585C66",
-      /*Accent Colors*/
-      yellow: "#FFCB47",
-      coralred: "#FF6B6B",
-      /*Neutral Colors*/
-      lightNgray: "#E5E5E5",
-      white: "#FFFFFF"
+      prdark: "#282A2E",
+      secdark: "#3F424A",
+      gray: "#ABABAB",
+      lgaccent: "#858B9D",
+      darkaccent: "#4B4F5B",
+      tetaccent: "#28303F"
     },
-    extend: {}
+    extend: {
+      fontFamily: {
+        poppins: ["Poppins", "sans-serif"]
+      }
+    }
   },
   plugins: []
 };
