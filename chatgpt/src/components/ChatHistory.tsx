@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { GoPlus } from "react-icons/go";
 import { BsThreeDots } from "react-icons/bs";
 import { FaRegBookmark } from "react-icons/fa";
@@ -7,7 +7,15 @@ import { BiMenuAltRight } from "react-icons/bi";
 import { FaSearch } from "react-icons/fa";
 import Chatgpt from "./icons/Chatgpt.tsx";
 
-const ChatHistory = () => {
+const ChatHistory = ({ savedResponses }) => {
+  const [activeTab, setActiveTab] = useState("Chat");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredChats = savedResponses.filter(
+    chat =>
+      chat.type === activeTab &&
+      chat.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   return (
     <div className="flex flex-col h-[100%]">
       <div className="">
@@ -19,28 +27,53 @@ const ChatHistory = () => {
           </div>
         </div>
         <div className="flex bg-prlight dark:bg-secdark p-1 rounded-sm mx-2">
-          <HistoryButton name="Chat" icon={IoChatbubble} data="24" />
-          <HistoryButton name="Saved" icon={FaRegBookmark} data="30" />
+          <HistoryButton
+            name="Chat"
+            icon={IoChatbubble}
+            data="24"
+            isActive={activeTab === "Chat"}
+            onClick={() => setActiveTab("Chat")}
+          />
+          <HistoryButton
+            name="Saved"
+            icon={FaRegBookmark}
+            data="30"
+            isActive={activeTab === "Saved"}
+            onClick={() => setActiveTab("Saved")}
+          />
         </div>
         <div className="mt-3 mx-2">
-          <Search />
+          <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </div>
       </div>
       <div className="flex flex-col mt-3 overflow-auto flex-1">
-        <History />
-        <History />
-        <History />
-        <History />
-        <History />
-        <History />
+        {filteredChats.length > 0 ? (
+          filteredChats.map(chat => (
+            <History key={chat.id} title={chat.title} date={chat.date} />
+          ))
+        ) : (
+          <p className="text-center text-gray dark:text-light mt-10">
+            No chats found.
+          </p>
+        )}
       </div>
     </div>
   );
 };
 
-const HistoryButton = ({ name, icon: Icon, data }) => {
+const HistoryButton = ({ name, icon: Icon, data, isActive, onClick }) => {
+  const baseStyle =
+    "flex justify-center gap-1 items-center text-sm py-2 px-1 rounded-sm flex-1 cursor-pointer";
+  const activeStyle =
+    "bg-white text-green shadow-xl dark:bg-black dark:text-green";
+  const inactiveStyle =
+    "text-dark dark:text-light hover:bg-white hover:text-green hover:shadow-xl dark:hover:bg-black dark:hover:text-green";
+
   return (
-    <div className="flex justify-center gap-1 items-center text-dark dark:text-light text-sm hover:bg-white hover:text-green hover:shadow-xl active:text-green active:shadow-xl active:bg-white dark:hover:bg-black dark:hover:text-green dark:active:bg-black dark:active:text-green py-2 px-1 rounded-sm flex-1">
+    <div
+      className={`${baseStyle} ${isActive ? activeStyle : inactiveStyle}`}
+      onClick={onClick}
+    >
       <div className="flex justify-center items-center gap-1">
         <Icon />
         <p className="flex-1">{name}</p>
@@ -50,7 +83,7 @@ const HistoryButton = ({ name, icon: Icon, data }) => {
   );
 };
 
-const Search = () => {
+const Search = ({ searchTerm, setSearchTerm }) => {
   return (
     <div className="flex justify-between items-center gap-2">
       <div className="flex flex-1 bg-prlight dark:bg-[#3F424A] dark:text-[#ABABAB] text-gray rounded p-1">
@@ -59,6 +92,8 @@ const Search = () => {
           className="bg-prlight outline-0 ml-2 dark:bg-secdark dark:placeholder-gray w-[150px]"
           type="text"
           placeholder="Search..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
         />
       </div>
       <BiMenuAltRight className="bg-prlight dark:bg-black text-green size-8 p-1 rounded" />
@@ -66,7 +101,7 @@ const Search = () => {
   );
 };
 
-const History = () => {
+const History = ({ title, date }) => {
   return (
     <div className="flex gap-3 p-2 hover:bg-mint dark:hover:bg-black active:bg-mint dark:active:bg-black rounded">
       <div className="pt-1">
@@ -74,10 +109,10 @@ const History = () => {
       </div>
       <div>
         <div className="flex justify-between items-center">
-          <h5 className="text-sm font-medium text-prdark dark:text-light">
-            what are aliens?
+          <h5 className="text-sm font-medium text-prdark dark:text-light line-clamp-1">
+            {title}
           </h5>
-          <p className="text-gray dark:text-gray text-[10px]">may</p>
+          <p className="text-gray dark:text-gray text-[10px]">{date}</p>
         </div>
         <p className="text-lgaccent text-[12px] pt-1">
           This is just a short notice that there will be an alien invation very

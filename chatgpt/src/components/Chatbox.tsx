@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { RiMenuFold2Line } from "react-icons/ri";
 import { RiChatNewLine } from "react-icons/ri";
 import { LuSendHorizontal } from "react-icons/lu";
@@ -15,12 +15,12 @@ import { BsThreeDots } from "react-icons/bs";
 import chatgptLogo from "../assets/chatgptLogo.svg";
 import joshua from "../assets/joshua.jpg";
 
-const Chatbox = () => {
+const Chatbox = ({ handleSave }) => {
   return (
     <div className="p-3 h-[100%] ">
       <Header />
       <ChatboxHeader />
-      <ChatMessage />
+      <ChatMessage handleSave={handleSave} />
     </div>
   );
 };
@@ -49,23 +49,59 @@ const ChatboxHeader = () => {
   );
 };
 
-const ChatMessage = () => {
+const ChatMessage = ({ handleSave }) => {
+  const [messages, setMessages] = useState([]); // Track messages
+  const [inputText, setInputText] = useState(""); // Track input text
+
+  const handleSendMessage = () => {
+    if (inputText.trim()) {
+      setMessages(prevMessages => [
+        ...prevMessages,
+        { id: prevMessages.length + 1, text: inputText, type: "User" }
+      ]);
+
+      setTimeout(() => {
+        setMessages(prevMessages => [
+          ...prevMessages,
+          {
+            id: prevMessages.length + 1,
+            text: "AI response to: " + inputText,
+            type: "AI"
+          }
+        ]);
+      }, 1000);
+
+      setInputText("");
+    }
+  };
   return (
     <div className="bg-tetlight dark:bg-secdark h-full rounded-sm p-3 flex flex-col gap-4 overflow-auto">
-      <div className="flex flex-col-reverse max-w-xl mx-auto flex-1 overflow-auto gap-5">
-        <UserMessage />
-        <AIResponse />
-        <UserMessage />
-        <AIResponse />
+      <div className="flex-1 flex flex-col overflow-y-auto max-w-xl mx-auto w-full gap-5">
+        {messages.map(message =>
+          message.type === "User" ? (
+            <UserMessage key={message.id} chattext={message.text} />
+          ) : (
+            <AIResponse
+              key={message.id}
+              chattext={message.text}
+              handleSave={handleSave}
+            />
+          )
+        )}
+        
       </div>
       <div className="w-full max-w-xl mx-auto">
-        <ChatEdit />
+        <ChatEdit
+          inputText={inputText}
+          setInputText={setInputText}
+          handleSendMessage={handleSendMessage}
+        />
       </div>
     </div>
   );
 };
 
-const ChatEdit = () => {
+const ChatEdit = ({ inputText, setInputText, handleSendMessage }) => {
   return (
     <div className="w-full flex items-center text-gray dark:text-lgaccent gap-2">
       <div className="flex flex-1 items-center bg-white dark:bg-darkaccent p-2 gap-2 rounded w-full">
@@ -74,8 +110,18 @@ const ChatEdit = () => {
           className="bg-white dark:bg-darkaccent w-full py-1 outline-0 placeholder-gray"
           type="text"
           placeholder="Ask questions or type '/' for commands"
+          value={inputText}
+          onChange={e => setInputText(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === "Enter") {
+              handleSendMessage();
+            }
+          }}
         />
-        <LuSendHorizontal className="size-8 p-1" />
+        <LuSendHorizontal
+          className="size-8 p-1 cursor-pointer"
+          onClick={handleSendMessage}
+        />
       </div>
       <div className="flex justify-center items-center bg-white dark:bg-darkaccent size-12 rounded">
         <TiMicrophoneOutline className="size-8 p-1 text-center" />
@@ -84,7 +130,7 @@ const ChatEdit = () => {
   );
 };
 
-const UserMessage = () => {
+const UserMessage = ({ chattext }) => {
   return (
     <div className="relative dark:text-light">
       <div className="ml-[42px]">
@@ -94,9 +140,7 @@ const UserMessage = () => {
         </p>
       </div>
       <div className="flex items-center gap-2 bg-white dark:bg-darkaccent ml-[21px] p-5 text-sm rounded-md w-fit">
-        <p className="sm:text-[14px]">
-          as they get a taste of it they all hot feightened
-        </p>
+        <p className="sm:text-[14px]">{chattext}</p>
         <FaRegEdit className="text-gray size-5" />
       </div>
       <div className="absolute top-0 left-0 size-10 p-1">
@@ -105,7 +149,22 @@ const UserMessage = () => {
     </div>
   );
 };
-const AIResponse = () => {
+const AIResponse = ({ handleSave, chattext }) => {
+  const [saved, setSaved] = useState(false);
+  const [feedback, setFeedback] = useState(null); // "like" or "dislike"
+  const [copied, setCopied] = useState(false);
+
+  const handleSaved = message => {
+    handleSave(message);
+    setSaved(!saved);
+  };
+  const handleCopy = text => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  const message = chattext;
+
   return (
     <div className="relative w-full dark:text-light">
       <div className="flex justify-between ml-[42px] items-center">
@@ -125,29 +184,42 @@ const AIResponse = () => {
           </span>
         </p>
       </div>
-      <div className="bg-mint dark:bg-tetaccent ml-[21px] p-5 text-sm rounded-md inline-block">
-        <p className="sm:text-[14px] dark:text-light">
-          this is the new way of life for the set of new people living across
-          the bridge they always think that lide is so fucking easy but as soo
-          as they get a taste of it they all hot feightened
-        </p>
+      <div className="bg-mint dark:bg-tetaccent ml-[21px] p-5 text-sm rounded-md inline-block w-[calc(100%-21px)]">
+        <p className="sm:text-[14px] dark:text-light">{message}</p>
         <div className="flex justify-between items-center mt-3">
           <div className="flex gap-3 bg-darkmint text-[12px] dark:bg-darkaccent rounded-full p-1">
-            <FaRegSmile className="inline" />
-            <FaRegFrown className="inline" />
+            <button onClick={() => setFeedback("like")}>
+              {feedback === "like" ? "😊" : <FaRegSmile />}
+            </button>
+            <button onClick={() => setFeedback("dislike")}>
+              {feedback === "dislike" ? "😞" : <FaRegFrown />}
+            </button>
           </div>
           <div className="flex justify-between text-[12px] items-center gap-3">
-            <p className="text-center bg-darkmint dark:bg-darkaccent rounded-lg px-2 py-1">
+            {" "}
+            <button
+              onClick={() => alert("Regenerating...")}
+              className="px-2 py-1 rounded-lg bg-darkmint dark:bg-darkaccent"
+            >
               <RiLoopRightFill className="inline" />{" "}
               <span className="hidden sm:inline">Generate response</span>
-            </p>
-            <p className="text-center bg-darkmint dark:bg-darkaccent rounded-lg px-2 py-1">
+            </button>
+            <button
+              onClick={() => handleCopy(message)}
+              className="px-2 py-1 rounded-lg bg-darkmint dark:bg-darkaccent"
+            >
               <MdContentCopy className="inline" />{" "}
-              <span className="hidden sm:inline">Copy</span>
-            </p>
-            <p className="text-center bg-darkmint dark:bg-darkaccent rounded-lg px-2 py-1">
+              <span className="hidden sm:inline">
+                {copied ? "Copied!" : "Copy"}
+              </span>
+            </button>
+            <button
+              onClick={() => handleSaved(message)}
+              disabled={saved}
+              className="px-2 py-1 rounded-lg bg-darkmint dark:bg-darkaccent dark:disabled:bg-gray disabled:bg-green disabled:text-mint"
+            >
               <FaRegBookmark className="inline" />
-            </p>
+            </button>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSidebar } from "./SidebarContext";
 import chatgpt from "../assets/chatgpt.svg";
 import { IoChatbubbleOutline } from "react-icons/io5";
 import { FaCloudsmith } from "react-icons/fa";
@@ -9,24 +10,42 @@ import joshua from "../assets/joshua.jpg";
 import { FaMoon, FaSun } from "react-icons/fa";
 
 const ChatNav = () => {
+  const { activeItem, setActiveItem } = useSidebar();
+
+  const getIconClasses = (name: string) =>
+    `size-8 p-2 rounded transition-all
+     ${
+       activeItem === name
+         ? "bg-green text-mint shadow-md"
+         : "bg-light text-green hover:bg-green hover:text-mint dark:bg-prdark"
+     }
+    `;
   return (
     <div className="p-2 h-full overflow-auto">
       <div className="flex flex-col h-full space-y-12 relative">
         <img className="rounded" src={chatgpt} alt="app logo" />
         <div className="flex flex-col justify-start mx-auto gap-3">
-          <IoChatbubbleOutline className="bg-light text-green hover:bg-green active:bg-green hover:text-mint active:text-mint dark:bg-prdark dark:text-green dark:hover:bg-green dark:active:bg-green  dark:hover:text-mint dark:active:text-mint size-8 p-2 rounded hover:shadow-md active:shadow-md hover:shadow-green active:shadow-green" />
-          <FaCloudsmith className="bg-light text-green hover:bg-green active:bg-green hover:text-mint active:text-mint dark:bg-prdark dark:text-green dark:hover:bg-green dark:active:bg-green  dark:hover:text-mint dark:active:text-mint size-8 p-2 rounded hover:shadow-md active:shadow-md hover:shadow-green active:shadow-green" />
-          <FaRegCompass className="bg-light text-green hover:bg-green active:bg-green hover:text-mint active:text-mint dark:bg-prdark dark:text-green dark:hover:bg-green dark:active:bg-green  dark:hover:text-mint dark:active:text-mint size-8 p-2 rounded hover:shadow-md active:shadow-md hover:shadow-green active:shadow-green" />
-          <GiNestedHexagons className="bg-light text-green hover:bg-green active:bg-green hover:text-mint active:text-mint dark:bg-prdark dark:text-green dark:hover:bg-green dark:active:bg-green  dark:hover:text-mint dark:active:text-mint size-8 p-2 rounded hover:shadow-md active:shadow-md hover:shadow-green active:shadow-green" />
+          <IoChatbubbleOutline className={getIconClasses("chat")} onClick={() => setActiveItem("chat")} />
+          <FaCloudsmith className={getIconClasses("cloud")} onClick={() => setActiveItem("cloud")} />
+          <FaRegCompass className={getIconClasses("compass")} onClick={() => setActiveItem("compass")} />
+          <GiNestedHexagons className={getIconClasses("hex")} onClick={() => setActiveItem("hex")} />
         </div>
         <div className="absolute flex flex-col gap-3 divide-softgray inset-x-0 bottom-0">
           <div className="flex flex-col gap-3 mx-auto">
-            <div className="size-8">
-              <img className="rounded" src={joshua} alt="image placeholder" />
+            <div className="size-8 relative">
+              <img
+                className="rounded-xl"
+                src={joshua}
+                alt="image placeholder"
+              />
+              <p className="px-1 text-[8px] text-center bg-prlight text-black dark:bg-white rounded-md absolute -bottom-1 left-1">
+                pro
+              </p>
             </div>
+
             <IoIosLogOut className="bg-light text-green hover:bg-green active:bg-green hover:text-mint active:text-mint dark:bg-prdark dark:text-green dark:hover:bg-green dark:active:bg-green  dark:hover:text-mint dark:active:text-mint size-8 p-2 rounded hover:shadow-md active:shadow-md hover:shadow-green active:shadow-green" />
           </div>
-          <hr className="bg-softgray my-4" />
+          <hr className="text-seclight dark:text-secdark my-4" />
           <div className="rounded flex justify-center">
             <ThemeToggle />
           </div>
@@ -36,27 +55,53 @@ const ChatNav = () => {
   );
 };
 
-const ThemeToggle = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+const ThemeToggle: React.FC = () => {
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [isDarkMode]);
+    const savedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+
+    const shouldUseDark = savedTheme === "dark" || (!savedTheme && prefersDark);
+
+    setIsDarkMode(shouldUseDark);
+    document.documentElement.classList.toggle("dark", shouldUseDark);
+  }, []);
 
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    localStorage.setItem("theme", newTheme ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", newTheme);
   };
-
   return (
-    <div className="flex flex-col gap-2 rounded-full bg-bglight dark:bg-tetdark dark:text-black w-fit p-1">
-      <button className="flex items-center justify-center border-0 p-1 hover:bg-white hover:shadow-2xl active:shadow-2xl rounded-full">
+    <div className="flex flex-col gap-2 rounded-lg bg-prlight dark:bg-secdark dark:text-light w-fit p-1">
+      <button
+        onClick={() => !isDarkMode && toggleTheme()}
+        aria-label="Enable dark mode"
+        className={`flex items-center justify-center p-2 rounded-full transition-colors duration-200
+          ${
+            isDarkMode
+              ? "bg-darkaccent text-white shadow-md"
+              : "bg-prlight hover:bg-white dark:bg-secdark dark:hover:bg-darkaccent"
+          }
+        `}
+      >
         <FaMoon className="size-2" />
       </button>
-      <button className="flex items-center justify-center border-0 p-1 hover:bg-white hover:shadow-2xl active:shadow-2xl rounded-full">
+      <button
+        onClick={() => isDarkMode && toggleTheme()}
+        aria-label="Enable light mode"
+        className={`flex items-center justify-center p-2 rounded-full transition-colors duration-200
+          ${
+            !isDarkMode
+              ? "bg-white text-yellow-500 shadow-md"
+              : "bg-prlight hover:bg-white dark:bg-secdark dark:hover:bg-darkaccent"
+          }
+        `}
+      >
         <FaSun className="size-2" />
       </button>
     </div>
