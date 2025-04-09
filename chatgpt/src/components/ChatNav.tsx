@@ -9,7 +9,7 @@ import { IoIosLogOut } from "react-icons/io";
 import joshua from "../assets/joshua.jpg";
 import { FaMoon, FaSun } from "react-icons/fa";
 
-const ChatNav = () => {
+const ChatNav = ({ handleSetActiveNav }) => {
   const { activeItem, setActiveItem } = useSidebar();
 
   const getIconClasses = (name: string) =>
@@ -20,15 +20,31 @@ const ChatNav = () => {
          : "bg-light text-green hover:bg-green hover:text-mint dark:bg-prdark"
      }
     `;
+  const handleClick = (navItem: string) => {
+    handleSetActiveNav(navItem);
+    setActiveItem(navItem);
+  };
   return (
     <div className="p-2 h-full overflow-auto">
       <div className="flex flex-col h-full space-y-12 relative">
         <img className="rounded" src={chatgpt} alt="app logo" />
         <div className="flex flex-col justify-start mx-auto gap-3">
-          <IoChatbubbleOutline className={getIconClasses("chat")} onClick={() => setActiveItem("chat")} />
-          <FaCloudsmith className={getIconClasses("cloud")} onClick={() => setActiveItem("cloud")} />
-          <FaRegCompass className={getIconClasses("compass")} onClick={() => setActiveItem("compass")} />
-          <GiNestedHexagons className={getIconClasses("hex")} onClick={() => setActiveItem("hex")} />
+          <IoChatbubbleOutline
+            className={getIconClasses("chat")}
+            onClick={() => handleClick("chat")}
+          />
+          <FaCloudsmith
+            className={getIconClasses("cloud")}
+            onClick={() => handleClick("cloud")}
+          />
+          <FaRegCompass
+            className={getIconClasses("compass")}
+            onClick={() => handleClick("compass")}
+          />
+          <GiNestedHexagons
+            className={getIconClasses("hex")}
+            onClick={() => handleClick("hex")}
+          />
         </div>
         <div className="absolute flex flex-col gap-3 divide-softgray inset-x-0 bottom-0">
           <div className="flex flex-col gap-3 mx-auto">

@@ -13,12 +13,20 @@ function App() {
     { id: 4, title: "aliens invasion", date: "march", type: "Saved" }
   ]);
 
+  const [activeNav, setActiveNav] = useState({ chat: false });
+
+  const handleSetActiveNav = key => {
+    setActiveNav(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
   const handleSave = message => {
     const trimmedTitle = message;
     const trimmedPreview = message;
     const date = new Date().toLocaleDateString("en-US", {
-      month: "short",
-      
+      month: "short"
     });
 
     setSavedResponses(prev => [
@@ -31,7 +39,6 @@ function App() {
         type: "Saved"
       }
     ]);
-    
   };
 
   return (
@@ -39,9 +46,13 @@ function App() {
       <SidebarProvider>
         <div className="flex bg-white dark:bg-black md:max-w-[1440px] mx-auto h-screen font-poppins">
           <div className="peer hidden sm:max-md:block bg-white dark:bg-black w-[64px] border-r border-r-seclight dark:border-r-0 h-[100%] md:w-[64px] md:block md:flex-auto">
-            <ChatNav />
+            <ChatNav handleSetActiveNav={handleSetActiveNav} />
           </div>
-          <div className="dark:bg-prdark hidden sm:max-md:absolute sm:max-md:top-0 sm:max-md:left-[64px] sm:max-md:backdrop-blur-xl sm:max-md:bg-white/30 sm:max-md:peer-hover:block sm:max-md:peer-active:block w-[310px] md:block sm:max-md:z-50 pb-2 h-[100%] md:flex-auto">
+          <div
+            className={`${
+              activeNav.chat ? "sm:max-md:block" : "sm:max-md:hidden"
+            } dark:bg-prdark hidden sm:max-md:absolute sm:max-md:top-0 sm:max-md:left-[64px] sm:max-md:backdrop-blur-xl sm:max-md:bg-white/30 w-[310px] md:block sm:max-md:z-50 pb-2 h-[100%] md:flex-auto`}
+          >
             <SidebarContent savedResponses={savedResponses} />
           </div>
           <div className="bg-white dark:bg-prdark w-full h-[100%] bg- md:flex-auto pb-9 sm:pb-10">

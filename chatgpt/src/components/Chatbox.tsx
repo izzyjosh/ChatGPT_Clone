@@ -1,4 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
+import "highlight.js/styles/github.css";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import { getGeminiResponse } from "../utils/getGeminiResponse.ts";
 import { RiMenuFold2Line } from "react-icons/ri";
 import { RiChatNewLine } from "react-icons/ri";
 import { LuSendHorizontal } from "react-icons/lu";
@@ -52,43 +57,79 @@ const ChatboxHeader = () => {
 const ChatMessage = ({ handleSave }) => {
   const [messages, setMessages] = useState([]); // Track messages
   const [inputText, setInputText] = useState(""); // Track input text
+  const [aiResponse, setAiResponse] = useState(null);
+  const [currentAIResponse, setCurrentAIResponse] = useState(null);
 
-  const handleSendMessage = () => {
+  const chatContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(scrollToBottom, 50);
+    }
+  }, [messages]);
+
+  const handleSendMessage = async () => {
     if (inputText.trim()) {
-      setMessages(prevMessages => [
-        ...prevMessages,
-        { id: prevMessages.length + 1, text: inputText, type: "User" }
-      ]);
+      const userMessage = {
+        id: messages.length + 1,
+        text: inputText,
+        type: "User"
+      };
+      setMessages(prev => [...prev, userMessage]);
+      setInputText("");
 
-      setTimeout(() => {
-        setMessages(prevMessages => [
-          ...prevMessages,
+      setCurrentAIResponse({ id: userMessage.id + 1, text: "", type: "AI" });
+
+      try {
+        let fullText = ``;
+        for await (const text of getGeminiResponse(inputText)) {
+          fullText += text;
+          setCurrentAIResponse(prev => ({ ...prev, text: fullText }));
+        }
+        setMessages(prev => [
+          ...prev,
+          { id: prev.length + 1, text: fullText, type: "AI" }
+        ]);
+        setCurrentAIResponse(null);
+      } catch (error) {
+        setMessages(prev => [
+          ...prev,
           {
-            id: prevMessages.length + 1,
-            text: "AI response to: " + inputText,
+            id: prev.length + 1,
+            text: `Sorry, something went wrong with the AI response:${error}`,
             type: "AI"
           }
         ]);
-      }, 1000);
-
-      setInputText("");
+        setCurrentAIResponse(null);
+      }
     }
   };
   return (
     <div className="bg-tetlight dark:bg-secdark h-full rounded-sm p-3 flex flex-col gap-4 overflow-auto">
-      <div className="flex-1 flex flex-col overflow-y-auto max-w-xl mx-auto w-full gap-5">
-        {messages.map(message =>
-          message.type === "User" ? (
-            <UserMessage key={message.id} chattext={message.text} />
-          ) : (
-            <AIResponse
-              key={message.id}
-              chattext={message.text}
-              handleSave={handleSave}
-            />
-          )
-        )}
-        
+      <div className="flex-1 flex flex-col-reverse overflow-y-auto max-w-xl mx-auto w-full ">
+        <div
+          className="flex-col-reverse space-y-re verse space-y-5"
+          ref={chatContainerRef}
+        >
+          {[...messages, ...(currentAIResponse ? [currentAIResponse] : [])].map(
+            message =>
+              message.type === "User" ? (
+                <UserMessage key={message.id} chattext={message.text} />
+              ) : (
+                <AIResponse
+                  key={message.id}
+                  chattext={message.text}
+                  handleSave={handleSave}
+                />
+              )
+          )}
+          <div ref={messagesEndRef} />
+        </div>
       </div>
       <div className="w-full max-w-xl mx-auto">
         <ChatEdit
@@ -154,6 +195,7 @@ const AIResponse = ({ handleSave, chattext }) => {
   const [feedback, setFeedback] = useState(null); // "like" or "dislike"
   const [copied, setCopied] = useState(false);
 
+  const message = chattext;
   const handleSaved = message => {
     handleSave(message);
     setSaved(!saved);
@@ -163,8 +205,6 @@ const AIResponse = ({ handleSave, chattext }) => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  const message = chattext;
-
   return (
     <div className="relative w-full dark:text-light">
       <div className="flex justify-between ml-[42px] items-center">
@@ -185,7 +225,9 @@ const AIResponse = ({ handleSave, chattext }) => {
         </p>
       </div>
       <div className="bg-mint dark:bg-tetaccent ml-[21px] p-5 text-sm rounded-md inline-block w-[calc(100%-21px)]">
-        <p className="sm:text-[14px] dark:text-light">{message}</p>
+        <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+          {message}
+        </Markdown>
         <div className="flex justify-between items-center mt-3">
           <div className="flex gap-3 bg-darkmint text-[12px] dark:bg-darkaccent rounded-full p-1">
             <button onClick={() => setFeedback("like")}>
