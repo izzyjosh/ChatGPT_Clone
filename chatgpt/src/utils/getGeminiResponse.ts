@@ -36,7 +36,7 @@ export function initChat() {
 }
 
 // Async generator to stream the response
-export async function* getGeminiResponse(message) {
+export default async function* getGeminiResponse(message) {
   if (!chat) initChat();
 
   const stream = await chat.sendMessageStream({ message });
@@ -44,4 +44,12 @@ export async function* getGeminiResponse(message) {
   for await (const chunk of stream) {
     yield chunk.text;
   }
+}
+
+export async function genTopic(text) {
+  const response = await ai.models.generateContent({
+    model: "gemini-2.0-flash",
+    contents: text
+  });
+  return response.text
 }

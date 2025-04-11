@@ -7,22 +7,36 @@ import { BiMenuAltRight } from "react-icons/bi";
 import { FaSearch } from "react-icons/fa";
 import Chatgpt from "./icons/Chatgpt.tsx";
 
-const ChatHistory = ({ savedResponses }) => {
+const ChatHistory = ({
+  savedResponses,
+  chatHistories,
+  handleNewChat,
+  handleGetChat
+}) => {
   const [activeTab, setActiveTab] = useState("Chat");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredChats = savedResponses.filter(
-    chat =>
-      chat.type === activeTab &&
-      chat.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const chats = Object.values(chatHistories);
+
+  const filteredChats =
+    activeTab === "Saved"
+      ? savedResponses.filter(chat =>
+          chat.title.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      : chats.filter(chat =>
+          chat.title.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
   return (
     <div className="flex flex-col h-[100%]">
       <div className="">
         <div className="flex justify-between items-center dark:text-light py-3 px-2">
           <h3 className="text-md font-bold">My Chats</h3>
           <div className="flex items-center gap-2">
-            <GoPlus className="size-7 bg-green rounded p-1 text-light" />
+            <GoPlus
+              className="size-7 bg-green rounded p-1 text-light"
+              onClick={() => handleNewChat()}
+            />
             <BsThreeDots className="size-6 bg-prlight dark:bg-black p-1 rounded" />
           </div>
         </div>
@@ -48,8 +62,8 @@ const ChatHistory = ({ savedResponses }) => {
       </div>
       <div className="flex flex-col mt-3 overflow-auto flex-1">
         {filteredChats.length > 0 ? (
-          filteredChats.map(chat => (
-            <History key={chat.id} title={chat.title} date={chat.date} />
+          [...filteredChats].reverse().map(chat => (
+  <History key={chat.id} chat={chat} handleGetChat={handleGetChat} />
           ))
         ) : (
           <p className="text-center text-gray dark:text-light mt-10">
@@ -101,23 +115,23 @@ const Search = ({ searchTerm, setSearchTerm }) => {
   );
 };
 
-const History = ({ title, date }) => {
+const History = ({ chat, handleGetChat }) => {
   return (
-    <div className="flex gap-3 p-2 hover:bg-mint dark:hover:bg-black active:bg-mint dark:active:bg-black rounded">
+    <div
+      onClick={() => handleGetChat(chat.id)}
+      className="flex gap-3 p-2 hover:bg-mint dark:hover:bg-black active:bg-mint dark:active:bg-black rounded"
+    >
       <div className="pt-1">
         <Chatgpt />
       </div>
       <div>
         <div className="flex justify-between items-center">
           <h5 className="text-sm font-medium text-prdark dark:text-light line-clamp-1">
-            {title}
+            {chat.title}
           </h5>
-          <p className="text-gray dark:text-gray text-[10px]">{date}</p>
+          <p className="text-gray dark:text-gray text-[10px]">{chat.date}</p>
         </div>
-        <p className="text-lgaccent text-[12px] pt-1">
-          This is just a short notice that there will be an alien invation very
-          soon on eart...
-        </p>
+        <p className="text-lgaccent text-[12px] pt-1">{chat.preview}</p>
       </div>
     </div>
   );

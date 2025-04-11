@@ -92,6 +92,20 @@ const ThemeToggle: React.FC = () => {
     localStorage.setItem("theme", newTheme ? "dark" : "light");
     document.documentElement.classList.toggle("dark", newTheme);
   };
+
+  // Handles code snippet dark or light mode
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = isDarkMode
+      ? "https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/github-dark.css"
+      : "https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/github.css";
+    document.head.appendChild(link);
+
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, [isDarkMode]);
   return (
     <div className="flex flex-col gap-2 rounded-lg bg-prlight dark:bg-secdark dark:text-light w-fit p-1">
       <button

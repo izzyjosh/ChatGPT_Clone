@@ -3,7 +3,7 @@ import "highlight.js/styles/github.css";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import { getGeminiResponse } from "../utils/getGeminiResponse.ts";
+import getGeminiResponse, {initChat } from "../utils/getGeminiResponse.ts";
 import { RiMenuFold2Line } from "react-icons/ri";
 import { RiChatNewLine } from "react-icons/ri";
 import { LuSendHorizontal } from "react-icons/lu";
@@ -20,12 +20,24 @@ import { BsThreeDots } from "react-icons/bs";
 import chatgptLogo from "../assets/chatgptLogo.svg";
 import joshua from "../assets/joshua.jpg";
 
-const Chatbox = ({ handleSave }) => {
+const Chatbox = ({
+  handleSave,
+  handleSetCurrChat,
+  chatHistories,
+  handleNewChat,
+  currChat
+}) => {
   return (
     <div className="p-3 h-[100%] ">
       <Header />
       <ChatboxHeader />
-      <ChatMessage handleSave={handleSave} />
+      <ChatMessage
+        handleSave={handleSave}
+        handleSetCurrChat={handleSetCurrChat}
+        chatHistories={chatHistories}
+        handleNewChat={handleNewChat}
+        currChat={currChat}
+      />
     </div>
   );
 };
@@ -54,7 +66,13 @@ const ChatboxHeader = () => {
   );
 };
 
-const ChatMessage = ({ handleSave }) => {
+const ChatMessage = ({
+  handleSave,
+  chatHistories,
+  handleSetCurrChat,
+  handleNewChat,
+  currChat
+}) => {
   const [messages, setMessages] = useState([]); // Track messages
   const [inputText, setInputText] = useState(""); // Track input text
   const [aiResponse, setAiResponse] = useState(null);
@@ -66,6 +84,9 @@ const ChatMessage = ({ handleSave }) => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+  useEffect(() => {
+    setMessages(currChat);
+  }, [currChat]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -73,38 +94,45 @@ const ChatMessage = ({ handleSave }) => {
     }
   }, [messages]);
 
+  useEffect(() => {
+    handleNewChat();
+  }, []);
+
   const handleSendMessage = async () => {
     if (inputText.trim()) {
       const userMessage = {
         id: messages.length + 1,
         text: inputText,
-        type: "User"
+        type: "User",
+        date: new Date().toLocaleDateString("en-US", { month: "short" })
       };
-      setMessages(prev => [...prev, userMessage]);
+      handleSetCurrChat(userMessage);
       setInputText("");
 
       setCurrentAIResponse({ id: userMessage.id + 1, text: "", type: "AI" });
 
       try {
         let fullText = ``;
-        for await (const text of getGeminiResponse(inputText)) {
-          fullText += text;
+
+        for await (const chunk of getGeminiResponse(inputText)) {
+          fullText += chunk;
           setCurrentAIResponse(prev => ({ ...prev, text: fullText }));
         }
-        setMessages(prev => [
-          ...prev,
-          { id: prev.length + 1, text: fullText, type: "AI" }
-        ]);
+        const aiMessage = {
+          id: userMessage.id + 1,
+          text: fullText,
+          type: "AI",
+          date: new Date().toLocaleDateString("en-US", { month: "short" })
+        };
         setCurrentAIResponse(null);
+        handleSetCurrChat(aiMessage);
       } catch (error) {
-        setMessages(prev => [
-          ...prev,
-          {
-            id: prev.length + 1,
-            text: `Sorry, something went wrong with the AI response:${error}`,
-            type: "AI"
-          }
-        ]);
+        const errorMessage = {
+          id: message.length + 1,
+          text: `Sorry, something went wrong with the AI response:${error}`,
+          type: "AI"
+        };
+        handleSetCurrChat(errorMessage);
         setCurrentAIResponse(null);
       }
     }
@@ -224,7 +252,7 @@ const AIResponse = ({ handleSave, chattext }) => {
           </span>
         </p>
       </div>
-      <div className="bg-mint dark:bg-tetaccent ml-[21px] p-5 text-sm rounded-md inline-block w-[calc(100%-21px)]">
+      <div className="bg-mint dark:bg-tetaccent ml-[21px] p-5 text-sm rounded-md inline-block w-[calc(100%-21px)] leading-6 prose dark:prose-invert custom-prose">
         <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
           {message}
         </Markdown>
