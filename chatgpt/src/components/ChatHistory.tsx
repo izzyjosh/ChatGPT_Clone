@@ -13,6 +13,7 @@ const ChatHistory = ({
   handleNewChat,
   handleGetChat
 }) => {
+  const [activeChild, setActiveChild] = useState(null);
   const [activeTab, setActiveTab] = useState("Chat");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -62,9 +63,17 @@ const ChatHistory = ({
       </div>
       <div className="flex flex-col mt-3 overflow-auto flex-1">
         {filteredChats.length > 0 ? (
-          [...filteredChats].reverse().map(chat => (
-  <History key={chat.id} chat={chat} handleGetChat={handleGetChat} />
-          ))
+          [...filteredChats]
+            .reverse()
+            .map(chat => (
+              <History
+                key={chat.id}
+                chat={chat}
+                isActiveChild={chat.id === activeChild}
+                handleGetChat={handleGetChat}
+                handleSetActiveChild={setActiveChild}
+              />
+            ))
         ) : (
           <p className="text-center text-gray dark:text-light mt-10">
             No chats found.
@@ -79,7 +88,7 @@ const HistoryButton = ({ name, icon: Icon, data, isActive, onClick }) => {
   const baseStyle =
     "flex justify-center gap-1 items-center text-sm py-2 px-1 rounded-sm flex-1 cursor-pointer";
   const activeStyle =
-    "bg-white text-green shadow-xl dark:bg-black dark:text-green";
+    "bg-white text-green shadow-md dark:bg-black dark:text-green";
   const inactiveStyle =
     "text-dark dark:text-light hover:bg-white hover:text-green hover:shadow-xl dark:hover:bg-black dark:hover:text-green";
 
@@ -115,21 +124,34 @@ const Search = ({ searchTerm, setSearchTerm }) => {
   );
 };
 
-const History = ({ chat, handleGetChat }) => {
+const History = ({
+  chat,
+  handleGetChat,
+  isActiveChild,
+  handleSetActiveChild
+}) => {
+  const handleClick = () => {
+    handleGetChat(chat.id);
+    handleSetActiveChild(chat.id);
+  };
   return (
     <div
-      onClick={() => handleGetChat(chat.id)}
-      className="flex gap-3 p-2 hover:bg-mint dark:hover:bg-black active:bg-mint dark:active:bg-black rounded"
+      onClick={handleClick}
+      className={`flex gap-3 p-2 rounded ${
+        isActiveChild
+          ? "bg-mint dark:bg-black"
+          : "hover:bg-mint dark:hover:bg-black"
+      }`}
     >
       <div className="pt-1">
         <Chatgpt />
       </div>
-      <div>
-        <div className="flex justify-between items-center">
-          <h5 className="text-sm font-medium text-prdark dark:text-light line-clamp-1">
+      <div className="flex flex-col w-full">
+        <div className="flex justify-between items-center ">
+          <h5 className="text-sm font-medium text-prdark dark:text-light line-clamp-1 grow">
             {chat.title}
           </h5>
-          <p className="text-gray dark:text-gray text-[10px]">{chat.date}</p>
+          <p className="text-gray text-[10px]">{chat.date}</p>
         </div>
         <p className="text-lgaccent text-[12px] pt-1">{chat.preview}</p>
       </div>

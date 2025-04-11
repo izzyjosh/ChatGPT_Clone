@@ -7,7 +7,7 @@ type SidebarContextType = {
   setActiveItem: (item: SidebarItem) => void;
 };
 
-const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
+const SidebarContext = createContext<SidebarContextType | undefined>("chat");
 
 export const SidebarProvider = ({ children }: { children: ReactNode }) => {
   const [activeItem, setActiveItem] = useState<SidebarItem>("chat");
@@ -21,6 +21,7 @@ export const SidebarProvider = ({ children }: { children: ReactNode }) => {
 
 export const useSidebar = () => {
   const context = useContext(SidebarContext);
-  if (!context) throw new Error("useSidebar must be used within SidebarProvider");
+  if (!context)
+    throw new Error("useSidebar must be used within SidebarProvider");
   return context;
 };

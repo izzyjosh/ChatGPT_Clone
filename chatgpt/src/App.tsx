@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import "./App.css";
 import Chatbox from "./components/Chatbox";
 import { SidebarProvider } from "./components/SidebarContext";
 import ChatNav from "./components/ChatNav";
@@ -30,6 +29,7 @@ function App() {
   );
   const [currId, setCurrId] = useState(null);
   const [currChat, setCurrChat] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const [activeNav, setActiveNav] = useState({ chat: false });
 
@@ -47,12 +47,16 @@ function App() {
   }, [chatHistories]);
 
   const handleGetChat = chatId => {
-    if (chatId && chatHistories[chatId]) {
-      setCurrChat(chatHistories[chatId].chats);
-      setCurrId(chatId);
-    } else {
-      setCurrChat(chatHistories[currId].chat);
-    }
+    setLoading(true);
+    setTimeout(() => {
+      if (chatId && chatHistories[chatId]) {
+        setCurrChat(chatHistories[chatId].chats);
+        setCurrId(chatId);
+      } else {
+        setCurrChat(chatHistories[currId].chat);
+      }
+      setLoading(false);
+    }, 1000);
   };
 
   const handleSetCurrChat = chat => {
@@ -102,8 +106,8 @@ function App() {
 
   const handleSave = message => {
     const trimmed = message.trim();
-    const title = trimmed.split(" ").slice(0, 3).join(" ");
-    const preview = trimmed.split("\n").slice(0, 2).join(" ");
+    const title = trimmed.split(" ").slice(0, 5).join(" ");
+    const preview = trimmed.split("\n").slice(0, 1).join(" ");
     const date = new Date().toLocaleDateString("en-US", {
       month: "short"
     });
@@ -147,14 +151,14 @@ function App() {
   return (
     <>
       <SidebarProvider>
-        <div className="flex bg-white dark:bg-black md:max-w-[1440px] mx-auto h-screen font-poppins">
-          <div className="peer hidden sm:max-md:block bg-white dark:bg-black w-[64px] border-r border-r-seclight dark:border-r-0 h-[100%] md:w-[64px] md:block md:flex-auto">
+        <div className="flex bg-white dark:bg-black md:max-w-[1440px] mx-auto h-screen font-poppins transition-colors duration-500">
+          <div className="peer hidden sm:max-md:block bg-white dark:bg-black w-[64px] border-r border-r-seclight dark:border-r-0 h-[100%] md:w-[64px] md:block md:flex-auto transition-colors duration-500">
             <ChatNav handleSetActiveNav={handleSetActiveNav} />
           </div>
           <div
             className={`${
               activeNav.chat ? "sm:max-md:block" : "sm:max-md:hidden"
-            } dark:bg-prdark hidden sm:max-md:absolute sm:max-md:top-0 sm:max-md:left-[64px] sm:max-md:backdrop-blur-xl sm:max-md:bg-white/30 w-[310px] md:block sm:max-md:z-50 pb-2 h-[100%] md:flex-auto`}
+            } dark:bg-prdark hidden sm:max-md:absolute sm:max-md:top-0 sm:max-md:left-[64px] sm:max-md:backdrop-blur-xl sm:max-md:bg-white/30 w-[310px] md:block sm:max-md:z-50 pb-2 h-[100%] md:flex-auto transition-colors duration-500`}
           >
             <SidebarContent
               savedResponses={savedResponses}
@@ -163,13 +167,14 @@ function App() {
               handleGetChat={handleGetChat}
             />
           </div>
-          <div className="bg-white dark:bg-prdark w-full h-[100%] bg- md:flex-auto pb-9 sm:pb-10">
+          <div className="bg-white dark:bg-prdark w-full h-[100%] transition-colors duration-500 md:flex-auto pb-9 sm:pb-10">
             <Chatbox
               handleSave={handleSave}
               handleSetCurrChat={handleSetCurrChat}
               chatHistories={chatHistories}
               handleNewChat={handleNewChat}
               currChat={currChat}
+              loading={loading}
             />
           </div>
         </div>

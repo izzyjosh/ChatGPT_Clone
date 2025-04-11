@@ -107,11 +107,11 @@ const ThemeToggle: React.FC = () => {
     };
   }, [isDarkMode]);
   return (
-    <div className="flex flex-col gap-2 rounded-lg bg-prlight dark:bg-secdark dark:text-light w-fit p-1">
+    <div className="flex flex-col gap-2 rounded-lg bg-prlight dark:bg-secdark dark:text-light w-fit p-1 transition-colors duration-500">
       <button
         onClick={() => !isDarkMode && toggleTheme()}
         aria-label="Enable dark mode"
-        className={`flex items-center justify-center p-2 rounded-full transition-colors duration-200
+        className={`flex items-center justify-center p-2 rounded-full transition-colors duration-500
           ${
             isDarkMode
               ? "bg-darkaccent text-white shadow-md"
@@ -124,7 +124,7 @@ const ThemeToggle: React.FC = () => {
       <button
         onClick={() => isDarkMode && toggleTheme()}
         aria-label="Enable light mode"
-        className={`flex items-center justify-center p-2 rounded-full transition-colors duration-200
+        className={`flex items-center justify-center p-2 rounded-full transition-colors duration-500
           ${
             !isDarkMode
               ? "bg-white text-yellow-500 shadow-md"

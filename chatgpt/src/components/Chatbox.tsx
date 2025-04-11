@@ -3,7 +3,9 @@ import "highlight.js/styles/github.css";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import getGeminiResponse, {initChat } from "../utils/getGeminiResponse.ts";
+import getGeminiResponse, { initChat } from "../utils/getGeminiResponse.ts";
+import ChatSkeleton from "./ChatSkeleton";
+import EmptyChat from "./EmptyChat";
 import { RiMenuFold2Line } from "react-icons/ri";
 import { RiChatNewLine } from "react-icons/ri";
 import { LuSendHorizontal } from "react-icons/lu";
@@ -25,7 +27,8 @@ const Chatbox = ({
   handleSetCurrChat,
   chatHistories,
   handleNewChat,
-  currChat
+  currChat,
+  loading
 }) => {
   return (
     <div className="p-3 h-[100%] ">
@@ -37,6 +40,7 @@ const Chatbox = ({
         chatHistories={chatHistories}
         handleNewChat={handleNewChat}
         currChat={currChat}
+        loading={loading}
       />
     </div>
   );
@@ -71,7 +75,8 @@ const ChatMessage = ({
   chatHistories,
   handleSetCurrChat,
   handleNewChat,
-  currChat
+  currChat,
+  loading
 }) => {
   const [messages, setMessages] = useState([]); // Track messages
   const [inputText, setInputText] = useState(""); // Track input text
@@ -139,13 +144,26 @@ const ChatMessage = ({
   };
   return (
     <div className="bg-tetlight dark:bg-secdark h-full rounded-sm p-3 flex flex-col gap-4 overflow-auto">
-      <div className="flex-1 flex flex-col-reverse overflow-y-auto max-w-xl mx-auto w-full ">
-        <div
-          className="flex-col-reverse space-y-re verse space-y-5"
-          ref={chatContainerRef}
-        >
-          {[...messages, ...(currentAIResponse ? [currentAIResponse] : [])].map(
-            message =>
+      <div
+        className={`${
+          messages.length === 0
+            ? "flex-col justify-center items-center p-4"
+            : "flex-col-reverse"
+        } flex-1 flex  overflow-y-auto max-w-xl mx-auto w-full`}
+      >
+        {loading ? (
+          <ChatSkeleton />
+        ) : messages.length === 0 ? (
+          <EmptyChat />
+        ) : (
+          <div
+            className="flex-col-reverse space-y-re verse space-y-5"
+            ref={chatContainerRef}
+          >
+            {[
+              ...messages,
+              ...(currentAIResponse ? [currentAIResponse] : [])
+            ].map(message =>
               message.type === "User" ? (
                 <UserMessage key={message.id} chattext={message.text} />
               ) : (
@@ -155,10 +173,12 @@ const ChatMessage = ({
                   handleSave={handleSave}
                 />
               )
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
       </div>
+
       <div className="w-full max-w-xl mx-auto">
         <ChatEdit
           inputText={inputText}
