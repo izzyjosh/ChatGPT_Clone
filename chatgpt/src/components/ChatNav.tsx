@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSidebar } from "./SidebarContext";
+
 import chatgpt from "../assets/chatgpt.svg";
 import { IoChatbubbleOutline } from "react-icons/io5";
 import { FaCloudsmith } from "react-icons/fa";
@@ -21,8 +22,8 @@ const ChatNav = ({ handleSetActiveNav }) => {
      }
     `;
   const handleClick = (navItem: string) => {
-    handleSetActiveNav(navItem);
     setActiveItem(navItem);
+    handleSetActiveNav(navItem)
   };
   return (
     <div className="p-2 h-full overflow-auto">

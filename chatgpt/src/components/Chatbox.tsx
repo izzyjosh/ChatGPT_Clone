@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useChat } from "./ChatContext";
+import { formatDate } from "../utils/date.ts";
 import "highlight.js/styles/github.css";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -22,26 +24,12 @@ import { BsThreeDots } from "react-icons/bs";
 import chatgptLogo from "../assets/chatgptLogo.svg";
 import joshua from "../assets/joshua.jpg";
 
-const Chatbox = ({
-  handleSave,
-  handleSetCurrChat,
-  chatHistories,
-  handleNewChat,
-  currChat,
-  loading
-}) => {
+const Chatbox = () => {
   return (
     <div className="p-3 h-[100%] ">
       <Header />
       <ChatboxHeader />
-      <ChatMessage
-        handleSave={handleSave}
-        handleSetCurrChat={handleSetCurrChat}
-        chatHistories={chatHistories}
-        handleNewChat={handleNewChat}
-        currChat={currChat}
-        loading={loading}
-      />
+      <ChatMessage />
     </div>
   );
 };
@@ -70,21 +58,22 @@ const ChatboxHeader = () => {
   );
 };
 
-const ChatMessage = ({
-  handleSave,
-  chatHistories,
-  handleSetCurrChat,
-  handleNewChat,
-  currChat,
-  loading
-}) => {
-  const [messages, setMessages] = useState([]); // Track messages
-  const [inputText, setInputText] = useState(""); // Track input text
+const ChatMessage = () => {
+  const [messages, setMessages] = useState([]);
+  const [inputText, setInputText] = useState("");
   const [aiResponse, setAiResponse] = useState(null);
   const [currentAIResponse, setCurrentAIResponse] = useState(null);
-
   const chatContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
+
+  const {
+    handleSave,
+    chatHistories,
+    handleSetCurrChat,
+    handleNewChat,
+    currChat,
+    loading
+  } = useChat();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -99,17 +88,26 @@ const ChatMessage = ({
     }
   }, [messages]);
 
-  useEffect(() => {
-    handleNewChat();
-  }, []);
-
   const handleSendMessage = async () => {
+
+    const date = (d =>
+      `${d.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short"
+      })} · ${d
+        .toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true
+        })
+        .replace(" ", "")}`)(new Date());
+
     if (inputText.trim()) {
       const userMessage = {
         id: messages.length + 1,
         text: inputText,
         type: "User",
-        date: new Date().toLocaleDateString("en-US", { month: "short" })
+        date: date
       };
       handleSetCurrChat(userMessage);
       setInputText("");
@@ -127,15 +125,16 @@ const ChatMessage = ({
           id: userMessage.id + 1,
           text: fullText,
           type: "AI",
-          date: new Date().toLocaleDateString("en-US", { month: "short" })
+          date: date
         };
         setCurrentAIResponse(null);
         handleSetCurrChat(aiMessage);
       } catch (error) {
         const errorMessage = {
-          id: message.length + 1,
+          id: messages.length + 1,
           text: `Sorry, something went wrong with the AI response:${error}`,
-          type: "AI"
+          type: "AI",
+          date: date
         };
         handleSetCurrChat(errorMessage);
         setCurrentAIResponse(null);
@@ -165,11 +164,16 @@ const ChatMessage = ({
               ...(currentAIResponse ? [currentAIResponse] : [])
             ].map(message =>
               message.type === "User" ? (
-                <UserMessage key={message.id} chattext={message.text} />
+                <UserMessage
+                  key={message.id}
+                  chattext={message.text}
+                  date={message.date}
+                />
               ) : (
                 <AIResponse
                   key={message.id}
                   chattext={message.text}
+                  date={message.date}
                   handleSave={handleSave}
                 />
               )
@@ -219,13 +223,13 @@ const ChatEdit = ({ inputText, setInputText, handleSendMessage }) => {
   );
 };
 
-const UserMessage = ({ chattext }) => {
+const UserMessage = ({ chattext, date }) => {
   return (
     <div className="relative dark:text-light">
       <div className="ml-[42px]">
         <p className="text-md font-bold px-1">
           You
-          <span className="text-[10px] text-gray px-3">2 Apr • 3:45PM</span>
+          <span className="text-[10px] text-gray px-3">{date}</span>
         </p>
       </div>
       <div className="flex items-center gap-2 bg-white dark:bg-darkaccent ml-[21px] p-5 text-sm rounded-md w-fit">
@@ -238,9 +242,9 @@ const UserMessage = ({ chattext }) => {
     </div>
   );
 };
-const AIResponse = ({ handleSave, chattext }) => {
+const AIResponse = ({ handleSave, chattext, date }) => {
   const [saved, setSaved] = useState(false);
-  const [feedback, setFeedback] = useState(null); // "like" or "dislike"
+  const [feedback, setFeedback] = useState(null);
   const [copied, setCopied] = useState(false);
 
   const message = chattext;
@@ -249,18 +253,23 @@ const AIResponse = ({ handleSave, chattext }) => {
     setSaved(!saved);
   };
   const handleCopy = text => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(err => {
+        console.error("Failed to copy text: ", err);
+        alert(err);
+      });
   };
   return (
     <div className="relative w-full dark:text-light">
       <div className="flex justify-between ml-[42px] items-center">
         <p className="text-md font-bold px-1">
           Response
-          <span className="text-[12px] text-gray px-3 truncate">
-            2 Apr • 3:45PM
-          </span>
+          <span className="text-[12px] text-gray px-3 truncate">{date}</span>
         </p>
         <p className="text-[10px] pt-1">
           <span className="bg-seclight dark:bg-tetaccent text-black dark:text-light px-1 m-1 rounded ">

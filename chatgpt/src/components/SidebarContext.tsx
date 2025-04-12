@@ -7,7 +7,7 @@ type SidebarContextType = {
   setActiveItem: (item: SidebarItem) => void;
 };
 
-const SidebarContext = createContext<SidebarContextType | undefined>("chat");
+const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export const SidebarProvider = ({ children }: { children: ReactNode }) => {
   const [activeItem, setActiveItem] = useState<SidebarItem>("chat");

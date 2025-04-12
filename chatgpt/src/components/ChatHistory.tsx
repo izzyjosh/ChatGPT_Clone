@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useChat } from "./ChatContext";
 import { GoPlus } from "react-icons/go";
 import { BsThreeDots } from "react-icons/bs";
 import { FaRegBookmark } from "react-icons/fa";
@@ -7,25 +8,21 @@ import { BiMenuAltRight } from "react-icons/bi";
 import { FaSearch } from "react-icons/fa";
 import Chatgpt from "./icons/Chatgpt.tsx";
 
-const ChatHistory = ({
-  savedResponses,
-  chatHistories,
-  handleNewChat,
-  handleGetChat
-}) => {
+const ChatHistory = () => {
   const [activeChild, setActiveChild] = useState(null);
   const [activeTab, setActiveTab] = useState("Chat");
   const [searchTerm, setSearchTerm] = useState("");
+  const { chatHistories, savedResponses, handleNewChat } = useChat();
 
   const chats = Object.values(chatHistories);
 
   const filteredChats =
     activeTab === "Saved"
-      ? savedResponses.filter(chat =>
-          chat.title.toLowerCase().includes(searchTerm.toLowerCase())
+      ? savedResponses.filter(
+          chat => chat.title?.toLowerCase().includes(searchTerm.toLowerCase())
         )
-      : chats.filter(chat =>
-          chat.title.toLowerCase().includes(searchTerm.toLowerCase())
+      : chats.filter(
+          chat => chat.title?.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
   return (
@@ -45,14 +42,14 @@ const ChatHistory = ({
           <HistoryButton
             name="Chat"
             icon={IoChatbubble}
-            data="24"
+            data={`${chats.length}`}
             isActive={activeTab === "Chat"}
             onClick={() => setActiveTab("Chat")}
           />
           <HistoryButton
             name="Saved"
             icon={FaRegBookmark}
-            data="30"
+            data={`${savedResponses.length}`}
             isActive={activeTab === "Saved"}
             onClick={() => setActiveTab("Saved")}
           />
@@ -70,8 +67,7 @@ const ChatHistory = ({
                 key={chat.id}
                 chat={chat}
                 isActiveChild={chat.id === activeChild}
-                handleGetChat={handleGetChat}
-                handleSetActiveChild={setActiveChild}
+                setActiveChild={setActiveChild}
               />
             ))
         ) : (
@@ -124,15 +120,11 @@ const Search = ({ searchTerm, setSearchTerm }) => {
   );
 };
 
-const History = ({
-  chat,
-  handleGetChat,
-  isActiveChild,
-  handleSetActiveChild
-}) => {
+const History = ({ chat, isActiveChild, setActiveChild }) => {
+  const { handleGetChat } = useChat();
   const handleClick = () => {
     handleGetChat(chat.id);
-    handleSetActiveChild(chat.id);
+    setActiveChild(chat.id);
   };
   return (
     <div
