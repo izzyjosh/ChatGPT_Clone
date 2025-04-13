@@ -1,12 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Chatbox from "./components/Chatbox";
-import { SidebarProvider, useSidebar } from "./components/SidebarContext";
+import { SidebarProvider } from "./components/SidebarContext";
 import ChatNav from "./components/ChatNav";
 import SidebarContent from "./components/SidebarContent";
-import { setLocalStorage, getFromLocalStorage } from "./utils/localStorage.ts";
 import { ChatProvider } from "./components/ChatContext";
 
-// localStorage.clear();
 function App() {
   const [activeNav, setActiveNav] = useState<Record<string, boolean>>({
     chat: false

@@ -64,36 +64,34 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const handleSetCurrChat = (chat: TChat) => {
     const newId = !currId ? `${Object.keys(chatHistories).length + 1}` : currId;
 
-    setCurrChat(prev => {
-      const updatedChat = [...prev, chat];
+    const currChat = chatHistories[chatId];
 
-      const firstUser = updatedChat.find(m => m.type === "User");
-      const firstAI = updatedChat.find(
-        m => m.type === "AI" || m.type === "assistant"
-      );
+    const updatedChat = [...currChat, chat];
 
-      const title =
-        firstUser?.text?.split(" ").slice(0, 5).join(" ") || "New Chat";
-      const preview =
-        firstAI?.text?.split("\n").slice(0, 1).join(" ") ||
-        "What's on your mind!";
-      const date = new Date().toLocaleDateString("en-US", { month: "short" });
+    const firstUser = updatedChat.find(m => m.type === "User");
+    const firstAI = updatedChat.find(
+      m => m.type === "AI" || m.type === "assistant"
+    );
 
-      const updatedHistory = {
-        id: newId,
-        title: title.trim(),
-        preview: preview.trim(),
-        date,
-        chats: updatedChat
-      };
+    const title =
+      firstUser?.text?.split(" ").slice(0, 5).join(" ") || "New Chat";
+    const preview =
+      firstAI?.text?.split("\n").slice(0, 1).join(" ") ||
+      "What's on your mind!";
+    const date = new Date().toLocaleDateString("en-US", { month: "short" });
 
-      setChatHistories(prevHistories => {
-        const newHistory = { ...prevHistories, [newId]: updatedHistory };
-        setLocalStorage("chatHistories", newHistory);
-        return newHistory;
-      });
+    const updatedHistory = {
+      id: newId,
+      title: title.trim(),
+      preview: preview.trim(),
+      date,
+      chats: updatedChat
+    };
 
-      return updatedChat;
+    setChatHistories(prevHistories => {
+      const newHistory = { ...prevHistories, [newId]: updatedHistory };
+      setLocalStorage("chatHistories", newHistory);
+      return newHistory;
     });
   };
 
@@ -144,7 +142,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       return updated;
     });
     setCurrId(chatId);
-    setCurrChat([]);
     handleGetChat(chatId);
   };
   return (

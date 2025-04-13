@@ -128,7 +128,7 @@ const ChatMessage = () => {
           date: date
         };
         setCurrentAIResponse(null);
-        handleSetCurrChat(aiMessage);
+        handleUpdateChat(aiMessage);
       } catch (error) {
         const errorMessage = {
           id: messages.length + 1,

@@ -1,18 +1,4 @@
-/**import { GoogleGenAI } from "@google/genai";
-const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
-export async function* getGeminiResponse(prompt) {
-  const response = await ai.models.generateContentStream({
-    model: "gemini-2.0-flash",
-    contents: prompt
-  });
-
-  for await (const chunk of response) {
-    yield chunk.text;
-  }
-*/
-// src/utils/geminiStreamChat.js
 import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
