@@ -19,10 +19,11 @@ type ChatHistoryEntry = {
 type ChatContextType = {
   savedResponses: TChat[];
   chatHistories: Record<string, ChatHistoryEntry>;
-  currChat: TChat[];
+  currId: string | null;
+  setCurrId: React.Dispatch<React.SetStateAction<string>>;
   loading: boolean;
   handleSave: (message: string) => void;
-  handleSetCurrChat: (chat: TChat[]) => void;
+  handleUpdateChat: (chat: TChat) => void;
   handleGetChat: (chatId: string) => void;
   handleNewChat: () => void;
 };
@@ -38,40 +39,27 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     Record<string, ChatHistoryEntry>
   >(() => getFromLocalStorage("chatHistories", {}));
   const [currId, setCurrId] = useState<string | null>(null);
-  const [currChat, setCurrChat] = useState<TChat[]>([]);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem("chatHistories", JSON.stringify(chatHistories));
-    localStorage.setItem("savedResponses", JSON.stringify(savedResponses));
-    const id = Object.keys(chatHistories).length.toString();
-    setCurrId(id);
-  }, [chatHistories, savedResponses]);
 
   const handleGetChat = (chatId: string) => {
     setLoading(true);
     setTimeout(() => {
       if (chatId && chatHistories[chatId]) {
-        setCurrChat(chatHistories[chatId].chats);
         setCurrId(chatId);
-      } else if (chatHistories[currId]) {
-        setCurrChat(chatHistories[currId].chats);
       }
       setLoading(false);
     }, 1000);
   };
 
-  const handleSetCurrChat = (chat: TChat) => {
-    const newId = !currId ? `${Object.keys(chatHistories).length + 1}` : currId;
+  const handleUpdateChat = (chats: TChat[]) => {
+    const chatId = currId ;
 
-    const currChat = chatHistories[chatId];
+    const existingChat = chatHistories[chatId];
 
-    const updatedChat = [...currChat, chat];
+    const updatedChat = [...chats];
 
     const firstUser = updatedChat.find(m => m.type === "User");
-    const firstAI = updatedChat.find(
-      m => m.type === "AI" || m.type === "assistant"
-    );
+    const firstAI = updatedChat.find(m => m.type === "AI");
 
     const title =
       firstUser?.text?.split(" ").slice(0, 5).join(" ") || "New Chat";
@@ -81,7 +69,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     const date = new Date().toLocaleDateString("en-US", { month: "short" });
 
     const updatedHistory = {
-      id: newId,
+      ...existingChat,
       title: title.trim(),
       preview: preview.trim(),
       date,
@@ -89,7 +77,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     };
 
     setChatHistories(prevHistories => {
-      const newHistory = { ...prevHistories, [newId]: updatedHistory };
+      const newHistory = { ...prevHistories, [currId]: updatedHistory };
       setLocalStorage("chatHistories", newHistory);
       return newHistory;
     });
@@ -142,17 +130,17 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       return updated;
     });
     setCurrId(chatId);
-    handleGetChat(chatId);
   };
   return (
     <ChatContext.Provider
       value={{
         savedResponses,
         chatHistories,
-        currChat,
+        currId,
+        setCurrId,
         loading,
         handleSave,
-        handleSetCurrChat,
+        handleUpdateChat,
         handleGetChat,
         handleNewChat
       }}

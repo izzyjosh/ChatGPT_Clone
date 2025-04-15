@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useChat } from "./ChatContext";
 import { formatDate } from "../utils/date.ts";
 import "highlight.js/styles/github.css";
@@ -69,18 +69,25 @@ const ChatMessage = () => {
   const {
     handleSave,
     chatHistories,
-    handleSetCurrChat,
+    handleUpdateChat,
     handleNewChat,
-    currChat,
-    loading
+    currId,
+    loading,
+    setCurrId
   } = useChat();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
   useEffect(() => {
-    setMessages(currChat);
-  }, [currChat]);
+    handleNewChat();
+  }, []);
+
+  useEffect(() => {
+    if (currId && chatHistories[currId]) {
+      setMessages(chatHistories[currId].chats);
+    }
+  }, [currId, chatHistories]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -89,7 +96,6 @@ const ChatMessage = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-
     const date = (d =>
       `${d.toLocaleDateString("en-GB", {
         day: "numeric",
@@ -103,16 +109,18 @@ const ChatMessage = () => {
         .replace(" ", "")}`)(new Date());
 
     if (inputText.trim()) {
+      const baseId = messages.length + 1;
+
       const userMessage = {
-        id: messages.length + 1,
+        id: baseId,
         text: inputText,
         type: "User",
-        date: date
+        date
       };
-      handleSetCurrChat(userMessage);
+      setMessages(prev => [...prev, userMessage]);
       setInputText("");
 
-      setCurrentAIResponse({ id: userMessage.id + 1, text: "", type: "AI" });
+      setCurrentAIResponse({ id: baseId + 1, text: "", type: "AI" });
 
       try {
         let fullText = ``;
@@ -121,23 +129,26 @@ const ChatMessage = () => {
           fullText += chunk;
           setCurrentAIResponse(prev => ({ ...prev, text: fullText }));
         }
+
         const aiMessage = {
-          id: userMessage.id + 1,
+          id: baseId + 1,
           text: fullText,
           type: "AI",
-          date: date
+          date
         };
+
+        setMessages(prev => [...prev, aiMessage]);
         setCurrentAIResponse(null);
-        handleUpdateChat(aiMessage);
+        handleUpdateChat([...messages, userMessage, aiMessage]); // use updated chat
       } catch (error) {
         const errorMessage = {
-          id: messages.length + 1,
-          text: `Sorry, something went wrong with the AI response:${error}`,
+          id: baseId + 1,
+          text: `Sorry, something went wrong with the AI response: ${error}`,
           type: "AI",
-          date: date
+          date
         };
-        handleSetCurrChat(errorMessage);
-        setCurrentAIResponse(null);
+        setMessages(prev => [...prev, errorMessage]);
+        handleUpdateChat([...messages, userMessage, errorMessage]);
       }
     }
   };
@@ -148,17 +159,14 @@ const ChatMessage = () => {
           messages.length === 0
             ? "flex-col justify-center items-center p-4"
             : "flex-col-reverse"
-        } flex-1 flex  overflow-y-auto max-w-xl mx-auto w-full`}
+        } flex-1 flex overflow-y-auto max-w-xl mx-auto w-full`}
       >
         {loading ? (
           <ChatSkeleton />
         ) : messages.length === 0 ? (
           <EmptyChat />
         ) : (
-          <div
-            className="flex-col-reverse space-y-re verse space-y-5"
-            ref={chatContainerRef}
-          >
+          <div className="space-y-8 space-y-reverse" ref={chatContainerRef}>
             {[
               ...messages,
               ...(currentAIResponse ? [currentAIResponse] : [])
@@ -225,7 +233,7 @@ const ChatEdit = ({ inputText, setInputText, handleSendMessage }) => {
 
 const UserMessage = ({ chattext, date }) => {
   return (
-    <div className="relative dark:text-light">
+    <div className="relative dark:text-light mb-8">
       <div className="ml-[42px]">
         <p className="text-md font-bold px-1">
           You

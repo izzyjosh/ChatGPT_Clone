@@ -4,7 +4,7 @@ import { SidebarProvider } from "./components/SidebarContext";
 import ChatNav from "./components/ChatNav";
 import SidebarContent from "./components/SidebarContent";
 import { ChatProvider } from "./components/ChatContext";
-
+//localStorage.clear();
 function App() {
   const [activeNav, setActiveNav] = useState<Record<string, boolean>>({
     chat: false
