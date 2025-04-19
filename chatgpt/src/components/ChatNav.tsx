@@ -9,8 +9,13 @@ import { GiNestedHexagons } from "react-icons/gi";
 import { IoIosLogOut } from "react-icons/io";
 import joshua from "../assets/joshua.jpg";
 import { FaMoon, FaSun } from "react-icons/fa";
+import { auth } from "../firebase.ts";
+import { signOut } from "firebase/auth";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const ChatNav = ({ handleSetActiveNav }) => {
+  const navigate = useNavigate();
   const { activeItem, setActiveItem } = useSidebar();
 
   const getIconClasses = (name: string) =>
@@ -23,7 +28,17 @@ const ChatNav = ({ handleSetActiveNav }) => {
     `;
   const handleClick = (navItem: string) => {
     setActiveItem(navItem);
-    handleSetActiveNav(navItem)
+    handleSetActiveNav(navItem);
+  };
+  const handleLogout = () => {
+    signOut(auth)
+      .then(() => {
+        toast.success("Logout successfully");
+        navigate("/login");
+      })
+      .catch(error => {
+        toast.error(error.message, { position: "bottom-left" });
+      });
   };
   return (
     <div className="p-2 h-full overflow-auto">
@@ -60,7 +75,10 @@ const ChatNav = ({ handleSetActiveNav }) => {
               </p>
             </div>
 
-            <IoIosLogOut className="bg-light text-green hover:bg-green active:bg-green hover:text-mint active:text-mint dark:bg-prdark dark:text-green dark:hover:bg-green dark:active:bg-green  dark:hover:text-mint dark:active:text-mint size-8 p-2 rounded hover:shadow-md active:shadow-md hover:shadow-green active:shadow-green" />
+            <IoIosLogOut
+              className="bg-light text-green hover:bg-green active:bg-green hover:text-mint active:text-mint dark:bg-prdark dark:text-green dark:hover:bg-green dark:active:bg-green  dark:hover:text-mint dark:active:text-mint size-8 p-2 rounded hover:shadow-md active:shadow-md hover:shadow-green active:shadow-green"
+              onClick={handleLogout}
+            />
           </div>
           <hr className="text-seclight dark:text-secdark my-4" />
           <div className="rounded flex justify-center">
