@@ -5,9 +5,6 @@ import { Navigate } from "react-router-dom";
 const ProtectedRoute = ({ children }) => {
   const [user, loading] = useAuthState(auth);
 
-  
-  
-
   return user ? children : <Navigate to="/login" />;
 };
 

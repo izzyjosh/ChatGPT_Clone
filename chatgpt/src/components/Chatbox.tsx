@@ -22,7 +22,7 @@ import { FaRegEdit } from "react-icons/fa";
 import { FaSearch } from "react-icons/fa";
 import { BsThreeDots } from "react-icons/bs";
 import chatgptLogo from "../assets/chatgptLogo.svg";
-import joshua from "../assets/joshua.jpg";
+import placeholder from "../assets/placeholder.jpg";
 
 const Chatbox = () => {
   return (
@@ -245,7 +245,7 @@ const UserMessage = ({ chattext, date }) => {
         <FaRegEdit className="text-gray size-5" />
       </div>
       <div className="absolute top-0 left-0 size-10 p-1">
-        <img className="rounded" src={joshua} alt="image placeholder" />
+        <img className="rounded" src={placeholder} alt="image placeholder" />
       </div>
     </div>
   );

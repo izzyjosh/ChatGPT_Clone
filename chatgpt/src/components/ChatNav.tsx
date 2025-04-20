@@ -7,7 +7,7 @@ import { FaCloudsmith } from "react-icons/fa";
 import { FaRegCompass } from "react-icons/fa";
 import { GiNestedHexagons } from "react-icons/gi";
 import { IoIosLogOut } from "react-icons/io";
-import joshua from "../assets/joshua.jpg";
+import placeholder from "../assets/placeholder.jpg";
 import { FaMoon, FaSun } from "react-icons/fa";
 import { auth } from "../firebase.ts";
 import { signOut } from "firebase/auth";
@@ -67,7 +67,7 @@ const ChatNav = ({ handleSetActiveNav }) => {
             <div className="size-8 relative">
               <img
                 className="rounded-xl"
-                src={joshua}
+                src={placeholder}
                 alt="image placeholder"
               />
               <p className="px-1 text-[8px] text-center bg-prlight text-black dark:bg-white rounded-md absolute -bottom-1 left-1">

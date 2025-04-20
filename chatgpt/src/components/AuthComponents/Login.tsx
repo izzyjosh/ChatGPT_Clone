@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import Chatgptbanner from "../../assets/Chatgptbanner.jpg";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -8,22 +8,29 @@ import {
 } from "firebase/auth";
 import { auth, provider } from "../../firebase.ts";
 import { toast } from "react-toastify";
+import LoadButton from "../LoadButton";
+import { FirebaseError } from "firebase/app";
+
+type eventT = React.ChangeEvent<HTMLInputElement>;
 
 const Login = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState({
+  const [loading, setLoading] = useState<boolean>(false);
+  const [user, setUser] = useState<Record<string, string>>({
     email: "",
     password: ""
   });
-  const handleEmailChange = e => {
+
+  const handleEmailChange = (e: eventT) => {
     setUser({ ...user, email: e.target.value });
   };
-  const handlePasswordChange = e => {
+  const handlePasswordChange = (e: eventT) => {
     setUser({ ...user, password: e.target.value });
   };
 
-  const handleLogin = async e => {
+  const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
@@ -34,14 +41,18 @@ const Login = () => {
       const activeUser = userCredential.user;
       toast.success("Login successfully");
       navigate("/");
-    } catch (error) {
-      toast.error(error.message, { position: "bottom-left" });
+    } catch (error: unknown) {
+      if (error instanceof FirebaseError) {
+        toast.error(error.message, { position: "bottom-left" });
+      }
+    } finally {
+      setLoading(false);
     }
   };
+
   const handleLoginWithGoogle = () => {
     signInWithPopup(auth, provider)
       .then(result => {
-        // This gives you a Google Access Token. You can use it to access the Google API.
         const credential = GoogleAuthProvider.credentialFromResult(result);
         const token = credential.accessToken;
         const user = result.user;
@@ -51,11 +62,10 @@ const Login = () => {
         }
       })
       .catch(error => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        const email = error.customData.email;
         const credential = GoogleAuthProvider.credentialFromError(error);
-        toast.error(`${error.message}, ${credential}`, { position: "bottom-left" });
+        toast.error(`${error.message}, ${credential}`, {
+          position: "bottom-left"
+        });
       });
   };
   return (
@@ -73,7 +83,6 @@ const Login = () => {
             <h2 className="text-2xl font-bold text-gray-900 text-center">
               Login
             </h2>
-
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-1">
@@ -88,7 +97,6 @@ const Login = () => {
                 className="w-full border border-gray px-3 py-2 rounded-md shadow-sm focus:outline-none focus:border-mint"
               />
             </div>
-
             {/* Password */}
             <div>
               <label
@@ -121,22 +129,18 @@ const Login = () => {
               </div>
               <div>Forgot password?</div>
             </div>
-
-            {/* Submit Button */}
-            <button
-              className="w-full py-2 px-4 bg-black hover:bg-prdark text-white font-semibold rounded-md shadow"
-              onClick={handleLogin}
-            >
-              Login
-            </button>
-
+            {/* Submit Button */}{" "}
+            <LoadButton
+              name={"Login"}
+              loading={loading}
+              handleClick={() => handleLogin}
+            />
             {/* OR divider */}
             <div className="flex items-center justify-center gap-2 text-gray-400">
               <hr className="w-1/4" />
               <span className="text-sm">OR</span>
               <hr className="w-1/4" />
             </div>
-
             {/* Google Sign Up */}
             <button
               className="w-full flex items-center justify-center gap-2 border-gray border-2 py-2 px-4 rounded-md shadow-sm hover:bg-gray"
@@ -151,7 +155,6 @@ const Login = () => {
                 Login with Google
               </span>
             </button>
-
             {/* Login Redirect */}
             <p className="text-sm text-center">
               Don't have an account?{" "}
