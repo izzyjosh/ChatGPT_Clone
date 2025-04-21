@@ -1,8 +1,8 @@
-import { format, differenceInDays, getDay } from "date-fns";
+import { format, getDay } from "date-fns";
 
-export const formatDate = date => {
+export const formatDate = (date: Date): string => {
   const today = new Date();
-  const diffTime = today - date;
+  const diffTime = today.getTime() - date.getTime();
 
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
@@ -11,7 +11,7 @@ export const formatDate = date => {
   } else if (diffDays === 1) {
     return "Yesterday";
   } else if (diffDays < 7) {
-    const weekday = [
+    const weekday: string[] = [
       "Sunday",
       "Monday",
       "Tuesday",
