@@ -13,8 +13,12 @@ import { auth } from "../firebase.ts";
 import { signOut } from "firebase/auth";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { SidebarItem } from "./SidebarContext";
 
-const ChatNav = ({ handleSetActiveNav }) => {
+interface ChatNavProp {
+  handleSetActiveNav: (key: string) => void;
+}
+const ChatNav = ({ handleSetActiveNav }: ChatNavProp) => {
   const navigate = useNavigate();
   const { activeItem, setActiveItem } = useSidebar();
 
@@ -26,7 +30,7 @@ const ChatNav = ({ handleSetActiveNav }) => {
          : "bg-light text-green hover:bg-green hover:text-mint dark:bg-prdark"
      }
     `;
-  const handleClick = (navItem: string) => {
+  const handleClick = (navItem: SidebarItem) => {
     setActiveItem(navItem);
     handleSetActiveNav(navItem);
   };

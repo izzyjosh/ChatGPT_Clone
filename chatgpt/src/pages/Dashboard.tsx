@@ -4,8 +4,8 @@ import { SidebarProvider } from "../components/SidebarContext";
 import ChatNav from "../components/ChatNav";
 import SidebarContent from "../components/SidebarContent";
 import { ChatProvider } from "../components/ChatContext";
-import { auth } from "../firebase.ts";
 
+//localStorage.clear()
 const Dashboard = () => {
   const [activeNav, setActiveNav] = useState<Record<string, boolean>>({
     chat: false

@@ -1,4 +1,3 @@
-import React from "react";
 import ChatSpinLogo from "../assets/ChatSpinLogo.svg";
 
 const EmptyChat = () => {

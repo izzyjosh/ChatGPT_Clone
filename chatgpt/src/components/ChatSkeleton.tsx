@@ -2,7 +2,7 @@ const ChatSkeleton = () => {
   return (
     <div className="flex flex-col gap-4 animate-pulse max-w-xl mx-auto w-full">
       {Array(4)
-        .fill()
+        .fill(5)
         .map((_, i) => (
           <div key={i} className="flex gap-3">
             <div className="w-10 h-10 bg-white dark:bg-prdark rounded" />

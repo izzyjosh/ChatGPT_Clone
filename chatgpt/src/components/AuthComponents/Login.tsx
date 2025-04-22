@@ -37,10 +37,10 @@ const Login = () => {
         user.email,
         user.password
       );
-
       const activeUser = userCredential.user;
+      if (activeUser) {
       toast.success("Login successfully");
-      navigate("/");
+      navigate("/");}
     } catch (error: unknown) {
       if (error instanceof FirebaseError) {
         toast.error(error.message, { position: "bottom-left" });
@@ -54,7 +54,7 @@ const Login = () => {
     signInWithPopup(auth, provider)
       .then(result => {
         const credential = GoogleAuthProvider.credentialFromResult(result);
-        const token = credential.accessToken;
+        const token = credential?.accessToken;
         const user = result.user;
         if (token && user) {
           toast.success("Login successfully");

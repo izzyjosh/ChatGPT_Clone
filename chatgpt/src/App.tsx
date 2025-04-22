@@ -1,16 +1,10 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Link,
-  Outlet
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Login from "./components/AuthComponents/Login";
 import Register from "./components/AuthComponents/Register";
 import AuthLayout from "./components/AuthComponents/AuthLayout";
 import { ToastContainer } from "react-toastify";
-import ProtectedRoute  from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (

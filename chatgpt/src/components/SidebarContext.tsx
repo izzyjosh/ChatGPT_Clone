@@ -1,10 +1,10 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
-type SidebarItem = "chat" | "cloud" | "compass" | "hex";
+export type SidebarItem = "chat" | "cloud" | "compass" | "hex";
 
 type SidebarContextType = {
   activeItem: SidebarItem;
-  setActiveItem: (item: SidebarItem) => void;
+  setActiveItem: React.Dispatch<React.SetStateAction<SidebarItem>>;
 };
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);

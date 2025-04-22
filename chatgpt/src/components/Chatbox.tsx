@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useChat } from "./ChatContext";
-import { formatDate } from "../utils/date.ts";
 import "highlight.js/styles/github.css";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import getGeminiResponse, { initChat } from "../utils/getGeminiResponse.ts";
+import getGeminiResponse from "../utils/getGeminiResponse.ts";
 import ChatSkeleton from "./ChatSkeleton";
 import EmptyChat from "./EmptyChat";
 import { RiMenuFold2Line } from "react-icons/ri";
@@ -23,6 +22,7 @@ import { FaSearch } from "react-icons/fa";
 import { BsThreeDots } from "react-icons/bs";
 import chatgptLogo from "../assets/chatgptLogo.svg";
 import placeholder from "../assets/placeholder.jpg";
+import { ChatMessageType } from "../utils/types.ts";
 
 const Chatbox = () => {
   return (
@@ -58,13 +58,14 @@ const ChatboxHeader = () => {
   );
 };
 
+type MessageState = ChatMessageType[];
 const ChatMessage = () => {
-  const [messages, setMessages] = useState([]);
-  const [inputText, setInputText] = useState("");
-  const [aiResponse, setAiResponse] = useState(null);
-  const [currentAIResponse, setCurrentAIResponse] = useState(null);
+  const [messages, setMessages] = useState<MessageState>([]);
+  const [inputText, setInputText] = useState<string>("");
+  const [currentAIResponse, setCurrentAIResponse] =
+    useState<ChatMessageType | null>(null);
   const chatContainerRef = useRef(null);
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const {
     handleSave,
@@ -72,8 +73,7 @@ const ChatMessage = () => {
     handleUpdateChat,
     handleNewChat,
     currId,
-    loading,
-    setCurrId
+    loading
   } = useChat();
 
   const scrollToBottom = () => {
@@ -96,7 +96,7 @@ const ChatMessage = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    const date = (d =>
+    const date: string = (d =>
       `${d.toLocaleDateString("en-GB", {
         day: "numeric",
         month: "short"
@@ -114,20 +114,25 @@ const ChatMessage = () => {
       const userMessage = {
         id: baseId,
         text: inputText,
-        type: "User",
-        date
+        date,
+        type: "User"
       };
       setMessages(prev => [...prev, userMessage]);
       setInputText("");
 
-      setCurrentAIResponse({ id: baseId + 1, text: "", type: "AI" });
+      setCurrentAIResponse({ id: baseId + 1, text: "", type: "AI", date });
 
       try {
-        let fullText = ``;
+        let fullText: string = ``;
 
         for await (const chunk of getGeminiResponse(inputText)) {
           fullText += chunk;
-          setCurrentAIResponse(prev => ({ ...prev, text: fullText }));
+          setCurrentAIResponse(prev => ({
+            id: prev?.id ?? baseId + 1,
+            text: fullText,
+            type: prev?.type ?? "AI",
+            date: prev?.date ?? date
+          }));
         }
 
         const aiMessage = {
@@ -139,8 +144,8 @@ const ChatMessage = () => {
 
         setMessages(prev => [...prev, aiMessage]);
         setCurrentAIResponse(null);
-        handleUpdateChat([...messages, userMessage, aiMessage]); // use updated chat
-      } catch (error) {
+        handleUpdateChat([...messages, userMessage, aiMessage]);
+      } catch (error: unknown) {
         const errorMessage = {
           id: baseId + 1,
           text: `Sorry, something went wrong with the AI response: ${error}`,
@@ -202,7 +207,16 @@ const ChatMessage = () => {
   );
 };
 
-const ChatEdit = ({ inputText, setInputText, handleSendMessage }) => {
+interface ChatEditProp {
+  inputText: string;
+  setInputText: React.Dispatch<React.SetStateAction<string>>;
+  handleSendMessage: () => void;
+}
+const ChatEdit = ({
+  inputText,
+  setInputText,
+  handleSendMessage
+}: ChatEditProp) => {
   return (
     <div className="w-full flex items-center text-gray dark:text-lgaccent gap-2">
       <div className="flex flex-1 items-center bg-white dark:bg-darkaccent p-2 gap-2 rounded w-full">
@@ -231,7 +245,11 @@ const ChatEdit = ({ inputText, setInputText, handleSendMessage }) => {
   );
 };
 
-const UserMessage = ({ chattext, date }) => {
+interface UserMessageProp {
+  chattext: string;
+  date: string;
+}
+const UserMessage = ({ chattext, date }: UserMessageProp) => {
   return (
     <div className="relative dark:text-light mb-8">
       <div className="ml-[42px]">
@@ -250,17 +268,23 @@ const UserMessage = ({ chattext, date }) => {
     </div>
   );
 };
-const AIResponse = ({ handleSave, chattext, date }) => {
-  const [saved, setSaved] = useState(false);
-  const [feedback, setFeedback] = useState(null);
-  const [copied, setCopied] = useState(false);
 
-  const message = chattext;
-  const handleSaved = message => {
+interface AIResponseProp {
+  handleSave: (message: string) => void;
+  chattext: string;
+  date: string;
+}
+const AIResponse = ({ handleSave, chattext, date }: AIResponseProp) => {
+  const [saved, setSaved] = useState<boolean>(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [copied, setCopied] = useState<boolean>(false);
+
+  const message: string = chattext;
+  const handleSaved = (message: string) => {
     handleSave(message);
     setSaved(!saved);
   };
-  const handleCopy = text => {
+  const handleCopy = (text: string) => {
     navigator.clipboard
       .writeText(text)
       .then(() => {

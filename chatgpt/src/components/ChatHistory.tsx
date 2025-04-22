@@ -7,14 +7,16 @@ import { IoChatbubble } from "react-icons/io5";
 import { BiMenuAltRight } from "react-icons/bi";
 import { FaSearch } from "react-icons/fa";
 import Chatgpt from "./icons/Chatgpt.tsx";
+import { ChatHistoryEntry, BaseChatEntry } from "../utils/types.ts";
+import { IconType } from "react-icons";
 
 const ChatHistory = () => {
-  const [activeChild, setActiveChild] = useState(null);
-  const [activeTab, setActiveTab] = useState("Chat");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [activeChild, setActiveChild] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("Chat");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const { chatHistories, savedResponses, handleNewChat } = useChat();
 
-  const chats = Object.values(chatHistories);
+  const chats: ChatHistoryEntry[] = Object.values(chatHistories);
 
   const filteredChats =
     activeTab === "Saved"
@@ -60,16 +62,17 @@ const ChatHistory = () => {
       </div>
       <div className="flex flex-col mt-3 overflow-auto flex-1">
         {filteredChats.length > 0 ? (
-          [...filteredChats]
-            .reverse()
-            .map(chat => (
+          [...filteredChats].reverse().map(chat => {
+            if (!chat.id) return null;
+            return (
               <History
                 key={chat.id}
                 chat={chat}
                 isActiveChild={chat.id === activeChild}
                 setActiveChild={setActiveChild}
               />
-            ))
+            );
+          })
         ) : (
           <p className="text-center text-gray dark:text-light mt-10">
             No chats found.
@@ -80,7 +83,20 @@ const ChatHistory = () => {
   );
 };
 
-const HistoryButton = ({ name, icon: Icon, data, isActive, onClick }) => {
+interface HistoryButtonProp {
+  name: string;
+  icon: IconType;
+  data: string;
+  isActive: boolean;
+  onClick: () => void;
+}
+const HistoryButton = ({
+  name,
+  icon: Icon,
+  data,
+  isActive,
+  onClick
+}: HistoryButtonProp) => {
   const baseStyle =
     "flex justify-center gap-1 items-center text-sm py-2 px-1 rounded-sm flex-1 cursor-pointer";
   const activeStyle =
@@ -102,7 +118,11 @@ const HistoryButton = ({ name, icon: Icon, data, isActive, onClick }) => {
   );
 };
 
-const Search = ({ searchTerm, setSearchTerm }) => {
+interface SearchProp {
+  searchTerm: string;
+  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+}
+const Search = ({ searchTerm, setSearchTerm }: SearchProp) => {
   return (
     <div className="flex justify-between items-center gap-2">
       <div className="flex flex-1 bg-prlight dark:bg-[#3F424A] dark:text-[#ABABAB] text-gray rounded p-1">
@@ -120,9 +140,16 @@ const Search = ({ searchTerm, setSearchTerm }) => {
   );
 };
 
-const History = ({ chat, isActiveChild, setActiveChild }) => {
+type ChatType = BaseChatEntry;
+interface HistoryProp {
+  chat: ChatType;
+  isActiveChild: boolean;
+  setActiveChild: React.Dispatch<React.SetStateAction<string | null>>;
+}
+const History = ({ chat, isActiveChild, setActiveChild }: HistoryProp) => {
   const { handleGetChat } = useChat();
   const handleClick = () => {
+    if (!chat.id) return null;
     handleGetChat(chat.id);
     setActiveChild(chat.id);
   };

@@ -1,13 +1,5 @@
-export type TChat = {
-  id: string;
-  title?: string;
-  date: Date;
-  preview: string;
-  chats?: any[];
-  type?: string;
-};
 
-export const getFromLocalStorage = (key: string, fallback) => {
+export const getFromLocalStorage = (key: string, fallback: [] | {}) => {
   try {
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : fallback;
@@ -16,10 +8,7 @@ export const getFromLocalStorage = (key: string, fallback) => {
   }
 };
 
-export const setLocalStorage = (
-  item: string,
-  chat: TChat[] | Record<string, TChat>
-) => {
+export const setLocalStorage = <T>(item: string, chat: T): void => {
   item === "chatHistories"
     ? localStorage.setItem("chatHistories", JSON.stringify(chat))
     : localStorage.setItem("savedResponses", JSON.stringify(chat));

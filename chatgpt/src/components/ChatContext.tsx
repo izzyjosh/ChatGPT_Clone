@@ -1,29 +1,19 @@
-import {
-  useState,
-  useEffect,
-  useContext,
-  createContext,
-  ReactNode
-} from "react";
+import { useState, useContext, createContext, ReactNode } from "react";
 import { setLocalStorage, getFromLocalStorage } from "../utils/localStorage.ts";
-import { TChat } from "../utils/localStorage.ts";
-
-type ChatHistoryEntry = {
-  id: string | null;
-  title: string;
-  preview: string;
-  date: string;
-  chats: TChat[];
-};
+import {
+  ChatMessageType,
+  ChatHistoryEntry,
+  SavedResponsesEntry
+} from "../utils/types.ts";
 
 type ChatContextType = {
-  savedResponses: TChat[];
+  savedResponses: SavedResponsesEntry[];
   chatHistories: Record<string, ChatHistoryEntry>;
   currId: string | null;
-  setCurrId: React.Dispatch<React.SetStateAction<string>>;
+  setCurrId: React.Dispatch<React.SetStateAction<string | null>>;
   loading: boolean;
   handleSave: (message: string) => void;
-  handleUpdateChat: (chat: TChat) => void;
+  handleUpdateChat: (chat: ChatMessageType[]) => void;
   handleGetChat: (chatId: string) => void;
   handleNewChat: () => void;
 };
@@ -32,8 +22,8 @@ type ChatContextType = {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
-  const [savedResponses, setSavedResponses] = useState<TChat[]>(() =>
-    getFromLocalStorage("savedResponses", [])
+  const [savedResponses, setSavedResponses] = useState<SavedResponsesEntry[]>(
+    () => getFromLocalStorage("savedResponses", [])
   );
   const [chatHistories, setChatHistories] = useState<
     Record<string, ChatHistoryEntry>
@@ -51,9 +41,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     }, 1000);
   };
 
-  const handleUpdateChat = (chats: TChat[]) => {
-    const chatId = currId ;
+  const handleUpdateChat = (chats: ChatMessageType[]) => {
+    const chatId = currId;
 
+    if (!chatId) return;
     const existingChat = chatHistories[chatId];
 
     const updatedChat = [...chats];
@@ -95,7 +86,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       const newSavedResponse = [
         ...prev,
         {
-          id: prev.length + 1,
+          id: (prev.length + 1).toString(),
           title: title || "Untitled",
           preview: preview || "",
           date,

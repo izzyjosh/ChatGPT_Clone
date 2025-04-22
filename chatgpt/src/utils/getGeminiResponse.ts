@@ -1,9 +1,8 @@
-
 import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
-let chat = null;
+let chat: ReturnType<typeof ai.chats.create> | null = null;
 
 export function initChat() {
   chat = ai.chats.create({
@@ -22,20 +21,19 @@ export function initChat() {
 }
 
 // Async generator to stream the response
-export default async function* getGeminiResponse(message) {
+export default async function* getGeminiResponse(
+  message: string
+): AsyncGenerator<string> {
   if (!chat) initChat();
 
+  if (!chat) {
+    throw new Error("failed to initialize chat");
+  }
   const stream = await chat.sendMessageStream({ message });
 
   for await (const chunk of stream) {
-    yield chunk.text;
+    if (typeof chunk.text === "string") {
+      yield chunk.text;
+    }
   }
-}
-
-export async function genTopic(text) {
-  const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: text
-  });
-  return response.text
 }
