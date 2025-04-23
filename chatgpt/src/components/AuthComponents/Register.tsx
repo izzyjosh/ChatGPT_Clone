@@ -52,7 +52,6 @@ const Register = () => {
         });
       }
       toast.success("Account created successfully");
-
       navigate("/");
     } catch (error: unknown) {
       if (error instanceof FirebaseError) {
