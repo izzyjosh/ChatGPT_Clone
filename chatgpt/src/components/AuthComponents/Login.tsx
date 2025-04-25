@@ -39,8 +39,9 @@ const Login = () => {
       );
       const activeUser = userCredential.user;
       if (activeUser) {
-      toast.success("Login successfully");
-      navigate("/");}
+        toast.success("Login successfully");
+        navigate("/");
+      }
     } catch (error: unknown) {
       if (error instanceof FirebaseError) {
         toast.error(error.message, { position: "bottom-left" });
@@ -133,7 +134,7 @@ const Login = () => {
             <LoadButton
               name={"Login"}
               loading={loading}
-              handleClick={() => handleLogin}
+              handleClick={handleLogin}
             />
             {/* OR divider */}
             <div className="flex items-center justify-center gap-2 text-gray-400">

@@ -7,22 +7,35 @@ import rehypeHighlight from "rehype-highlight";
 import getGeminiResponse from "../utils/getGeminiResponse.ts";
 import ChatSkeleton from "./ChatSkeleton";
 import EmptyChat from "./EmptyChat";
-import { RiMenuFold2Line } from "react-icons/ri";
-import { RiChatNewLine } from "react-icons/ri";
+import {
+  RiMenuFold2Line,
+  RiChatNewLine,
+  RiLoopRightFill
+} from "react-icons/ri";
+
 import { LuSendHorizontal } from "react-icons/lu";
 import { TiMicrophoneOutline } from "react-icons/ti";
 import { ImMagicWand } from "react-icons/im";
-import { FaRegSmile } from "react-icons/fa";
-import { FaRegFrown } from "react-icons/fa";
+import {
+  FaRegSmile,
+  FaSearch,
+  FaRegEdit,
+  FaRegBookmark,
+  FaRegFrown
+} from "react-icons/fa";
 import { MdContentCopy } from "react-icons/md";
-import { RiLoopRightFill } from "react-icons/ri";
-import { FaRegBookmark } from "react-icons/fa";
-import { FaRegEdit } from "react-icons/fa";
-import { FaSearch } from "react-icons/fa";
 import { BsThreeDots } from "react-icons/bs";
 import chatgptLogo from "../assets/chatgptLogo.svg";
 import placeholder from "../assets/placeholder.jpg";
 import { ChatMessageType } from "../utils/types.ts";
+import {
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  Timestamp
+} from "firebase/firestore";
+import { db } from "../firebase.ts";
 
 const Chatbox = () => {
   return (
@@ -64,17 +77,12 @@ const ChatMessage = () => {
   const [inputText, setInputText] = useState<string>("");
   const [currentAIResponse, setCurrentAIResponse] =
     useState<ChatMessageType | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const chatContainerRef = useRef(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const {
-    handleSave,
-    chatHistories,
-    handleUpdateChat,
-    handleNewChat,
-    currId,
-    loading
-  } = useChat();
+  const { handleSave, handleUpdateChat, handleNewChat, currId, userId } =
+    useChat();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -84,10 +92,30 @@ const ChatMessage = () => {
   }, []);
 
   useEffect(() => {
-    if (currId && chatHistories[currId]) {
-      setMessages(chatHistories[currId].chats);
+    if (userId && currId) {
+      setLoading(true);
+      const chatCollectionRef = collection(
+        db,
+        "users",
+        userId,
+        "chatHistory",
+        currId,
+        "chats"
+      );
+
+      const q = query(chatCollectionRef, orderBy("createdAt"));
+
+      const unsubscribe = onSnapshot(q, snapshot => {
+        const fetchedMessages = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as ChatMessageType[];
+        setMessages(fetchedMessages);
+      });
+      setLoading(false);
+      return () => unsubscribe();
     }
-  }, [currId, chatHistories]);
+  }, [currId, userId]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -96,64 +124,68 @@ const ChatMessage = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    const date: string = (d =>
-      `${d.toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short"
-      })} · ${d
-        .toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true
-        })
-        .replace(" ", "")}`)(new Date());
-
     if (inputText.trim()) {
-      const baseId = messages.length + 1;
+      const now = new Date();
+      const createdAt = Timestamp.fromDate(now);
+      const formattedDate = now.toLocaleString("en-US", {
+        day: "numeric",
+        month: "short",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+      });
 
       const userMessage = {
-        id: baseId,
         text: inputText,
-        date,
-        type: "User"
+        date: formattedDate,
+        type: "User",
+        createdAt
       };
       setMessages(prev => [...prev, userMessage]);
       setInputText("");
 
-      setCurrentAIResponse({ id: baseId + 1, text: "", type: "AI", date });
+      setCurrentAIResponse({
+        text: "",
+        type: "AI",
+        date: formattedDate,
+        createdAt
+      });
 
       try {
-        let fullText: string = ``;
+        let fullText = "";
 
         for await (const chunk of getGeminiResponse(inputText)) {
           fullText += chunk;
           setCurrentAIResponse(prev => ({
-            id: prev?.id ?? baseId + 1,
             text: fullText,
-            type: prev?.type ?? "AI",
-            date: prev?.date ?? date
+            type: "AI",
+            date: prev?.date ?? formattedDate,
+            createdAt: prev?.createdAt ?? createdAt
           }));
         }
 
         const aiMessage = {
-          id: baseId + 1,
           text: fullText,
           type: "AI",
-          date
+          date: formattedDate,
+          createdAt
         };
 
         setMessages(prev => [...prev, aiMessage]);
         setCurrentAIResponse(null);
-        handleUpdateChat([...messages, userMessage, aiMessage]);
+
+        await handleUpdateChat(userMessage);
+        await handleUpdateChat(aiMessage);
       } catch (error: unknown) {
         const errorMessage = {
-          id: baseId + 1,
           text: `Sorry, something went wrong with the AI response: ${error}`,
           type: "AI",
-          date
+          date: formattedDate,
+          createdAt
         };
         setMessages(prev => [...prev, errorMessage]);
-        handleUpdateChat([...messages, userMessage, errorMessage]);
+        await handleUpdateChat(userMessage);
+        await handleUpdateChat(errorMessage);
       }
     }
   };
@@ -178,13 +210,13 @@ const ChatMessage = () => {
             ].map(message =>
               message.type === "User" ? (
                 <UserMessage
-                  key={message.id}
+                  key={message.id ?? message.date + message.type}
                   chattext={message.text}
                   date={message.date}
                 />
               ) : (
                 <AIResponse
-                  key={message.id}
+                  key={message.id ?? message.date + message.type}
                   chattext={message.text}
                   date={message.date}
                   handleSave={handleSave}

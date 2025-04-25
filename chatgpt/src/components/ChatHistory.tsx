@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useChat } from "./ChatContext";
 import { GoPlus } from "react-icons/go";
 import { BsThreeDots } from "react-icons/bs";
@@ -9,14 +9,63 @@ import { FaSearch } from "react-icons/fa";
 import Chatgpt from "./icons/Chatgpt.tsx";
 import { ChatHistoryEntry, BaseChatEntry } from "../utils/types.ts";
 import { IconType } from "react-icons";
+import { db } from "../firebase.ts";
+import {
+  collection,
+  onSnapshot,
+  DocumentData,
+  QuerySnapshot
+} from "firebase/firestore";
 
 const ChatHistory = () => {
   const [activeChild, setActiveChild] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("Chat");
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const { chatHistories, savedResponses, handleNewChat } = useChat();
+  const [chats, setChats] = useState<ChatHistoryEntry[]>([]);
+  const [savedResponses, setSavedResponses] = useState<ChatHistoryEntry[]>([]);
 
-  const chats: ChatHistoryEntry[] = Object.values(chatHistories);
+  const { handleNewChat, userId } = useChat();
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const chatCollectionRef = collection(db, "users", userId, "chatHistory");
+    const savedCollectionRef = collection(
+      db,
+      "users",
+      userId,
+      "savedResponses"
+    );
+
+    const unsubscribeChats = onSnapshot(
+      chatCollectionRef,
+      (snapshot: QuerySnapshot<DocumentData>) => {
+        const chatData: ChatHistoryEntry[] = snapshot.docs.map(doc => ({
+          ...(doc.data() as Omit<ChatHistoryEntry, "id">),
+          id: doc.id
+        }));
+        setChats(chatData);
+        console.log(chatData);
+      }
+    );
+
+    const unsubscribeSaved = onSnapshot(
+      savedCollectionRef,
+      (snapshot: QuerySnapshot<DocumentData>) => {
+        const savedData: ChatHistoryEntry[] = snapshot.docs.map(doc => ({
+          ...(doc.data() as Omit<ChatHistoryEntry, "id">),
+          id: doc.id
+        }));
+        setSavedResponses(savedData);
+        console.log(savedResponses);
+      }
+    );
+
+    return () => {
+      unsubscribeChats();
+      unsubscribeSaved();
+    };
+  }, [userId]);
 
   const filteredChats =
     activeTab === "Saved"

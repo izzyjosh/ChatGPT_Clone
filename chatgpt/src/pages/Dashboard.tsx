@@ -5,7 +5,6 @@ import ChatNav from "../components/ChatNav";
 import SidebarContent from "../components/SidebarContent";
 import { ChatProvider } from "../components/ChatContext";
 
-//localStorage.clear()
 const Dashboard = () => {
   const [activeNav, setActiveNav] = useState<Record<string, boolean>>({
     chat: false

@@ -1,19 +1,32 @@
-import { useState, useContext, createContext, ReactNode } from "react";
-import { setLocalStorage, getFromLocalStorage } from "../utils/localStorage.ts";
 import {
-  ChatMessageType,
-  ChatHistoryEntry,
-  SavedResponsesEntry
-} from "../utils/types.ts";
+  useState,
+  useContext,
+  createContext,
+  useEffect,
+  ReactNode
+} from "react";
+
+import { ChatMessageType } from "../utils/types";
+import { db, auth } from "../firebase.ts";
+import {
+  doc,
+  addDoc,
+  setDoc,
+  updateDoc,
+  getDocs,
+  collection,
+  query,
+  limit,
+  where
+} from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 type ChatContextType = {
-  savedResponses: SavedResponsesEntry[];
-  chatHistories: Record<string, ChatHistoryEntry>;
   currId: string | null;
   setCurrId: React.Dispatch<React.SetStateAction<string | null>>;
-  loading: boolean;
-  handleSave: (message: string) => void;
-  handleUpdateChat: (chat: ChatMessageType[]) => void;
+  userId: string | null;
+  handleSave: (message: ChatMessageType) => void;
+  handleUpdateChat: (chat: ChatMessageType) => void;
   handleGetChat: (chatId: string) => void;
   handleNewChat: () => void;
 };
@@ -22,114 +35,120 @@ type ChatContextType = {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
-  const [savedResponses, setSavedResponses] = useState<SavedResponsesEntry[]>(
-    () => getFromLocalStorage("savedResponses", [])
-  );
-  const [chatHistories, setChatHistories] = useState<
-    Record<string, ChatHistoryEntry>
-  >(() => getFromLocalStorage("chatHistories", {}));
+  const [userId, setUserId] = useState<string | null>(null);
   const [currId, setCurrId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        setUserId(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleGetChat = (chatId: string) => {
-    setLoading(true);
-    setTimeout(() => {
-      if (chatId && chatHistories[chatId]) {
-        setCurrId(chatId);
-      }
-      setLoading(false);
-    }, 1000);
-  };
-
-  const handleUpdateChat = (chats: ChatMessageType[]) => {
-    const chatId = currId;
-
-    if (!chatId) return;
-    const existingChat = chatHistories[chatId];
-
-    const updatedChat = [...chats];
-
-    const firstUser = updatedChat.find(m => m.type === "User");
-    const firstAI = updatedChat.find(m => m.type === "AI");
-
-    const title =
-      firstUser?.text?.split(" ").slice(0, 5).join(" ") || "New Chat";
-    const preview =
-      firstAI?.text?.split("\n").slice(0, 1).join(" ") ||
-      "What's on your mind!";
-    const date = new Date().toLocaleDateString("en-US", { month: "short" });
-
-    const updatedHistory = {
-      ...existingChat,
-      title: title.trim(),
-      preview: preview.trim(),
-      date,
-      chats: updatedChat
-    };
-
-    setChatHistories(prevHistories => {
-      const newHistory = { ...prevHistories, [currId]: updatedHistory };
-      setLocalStorage("chatHistories", newHistory);
-      return newHistory;
-    });
-  };
-
-  const handleSave = (message: string) => {
-    const trimmed = message.trim();
-    const title = trimmed.split(" ").slice(0, 5).join(" ");
-    const preview = trimmed.split("\n").slice(0, 1).join(" ");
-    const date = new Date().toLocaleDateString("en-US", {
-      month: "short"
-    });
-
-    setSavedResponses(prev => {
-      const newSavedResponse = [
-        ...prev,
-        {
-          id: (prev.length + 1).toString(),
-          title: title || "Untitled",
-          preview: preview || "",
-          date,
-          type: "Saved"
-        }
-      ];
-      setLocalStorage("savedResponses", newSavedResponse);
-      return newSavedResponse;
-    });
-  };
-
-  const handleNewChat = () => {
-    const chatId = `${Object.keys(chatHistories).length + 1}`;
-    const title = "New Chat";
-    const preview = "What's on your mind!";
-    const date = new Date().toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric"
-    });
-
-    const newChatHistory = {
-      id: chatId,
-      title,
-      preview,
-      date,
-      chats: []
-    };
-
-    setChatHistories(prev => {
-      const updated = { ...prev, [chatId]: newChatHistory };
-      setLocalStorage("chatHistories", updated);
-      return updated;
-    });
     setCurrId(chatId);
+  };
+
+  const handleUpdateChat = async (message: ChatMessageType) => {
+    if (!userId || !currId) return;
+    try {
+      const chatDocRef = doc(db, "users", userId, "chatHistory", currId);
+      const chatCollectionRef = collection(
+        db,
+        "users",
+        userId,
+        "chatHistory",
+        currId,
+        "chats"
+      );
+      await addDoc(chatCollectionRef, message);
+
+      const userQuerySnap = await getDocs(
+        query(chatCollectionRef, where("type", "==", "user"), limit(1))
+      );
+      const aiQuerySnap = await getDocs(
+        query(chatCollectionRef, where("type", "==", "AI"), limit(1))
+      );
+
+      const userMessage = userQuerySnap.docs[0]?.data()?.text || "New Chat";
+      const aiMessage =
+        aiQuerySnap.docs[0]?.data()?.text || "What's on your mind!";
+
+      const updatedHistory = {
+        title: userMessage.split(" ").slice(0, 5).join(" ").trim(),
+        preview: aiMessage.split("\n").slice(0, 1).join(" ").trim(),
+        date: new Date().toLocaleDateString("en-US", { month: "short" })
+      };
+      await updateDoc(chatDocRef, updatedHistory);
+    } catch (error: unknown) {
+      if (error instanceof Error) console.log(error);
+    }
+  };
+
+  const handleSave = async (message: ChatMessageType) => {
+    if (!userId) return;
+    try {
+      const trimmed = message.text.trim();
+      const title = trimmed.split(" ").slice(0, 5).join(" ");
+      const preview = trimmed.split("\n")[0];
+
+      const savedMessage = {
+        title,
+        preview,
+        date: new Date().toLocaleDateString("en-US", { month: "short" }),
+        message
+      };
+
+      const messageRef = doc(
+        db,
+        "users",
+        userId,
+        "savedMessages",
+        Date.now().toString()
+      );
+      await setDoc(messageRef, savedMessage);
+    } catch (error) {
+      if (error instanceof Error) console.log(error);
+    }
+  };
+
+  const handleNewChat = async () => {
+    if (!userId) return;
+
+    try {
+      const chatHistoryCollection = collection(
+        db,
+        "users",
+        userId,
+        "chatHistory"
+      );
+      const newChat = {
+        title: "New Chat",
+        preview: "What's on your mind!",
+        date: new Date().toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric"
+        })
+      };
+
+      const docRef = await addDoc(chatHistoryCollection, newChat);
+      
+      setCurrId(docRef.id);
+    } catch (error: unknown) {
+      if (error instanceof Error) console.log(error);
+    }
   };
   return (
     <ChatContext.Provider
       value={{
-        savedResponses,
-        chatHistories,
         currId,
+        userId,
         setCurrId,
-        loading,
         handleSave,
         handleUpdateChat,
         handleGetChat,
