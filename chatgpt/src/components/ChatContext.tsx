@@ -17,7 +17,8 @@ import {
   collection,
   query,
   limit,
-  where
+  where,
+  Timestamp
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -79,10 +80,20 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       const aiMessage =
         aiQuerySnap.docs[0]?.data()?.text || "What's on your mind!";
 
+      const now = new Date();
+      const createdAt = Timestamp.fromDate(now);
+      const formattedDate = now.toLocaleString("en-US", {
+        day: "numeric",
+        month: "short",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+      });
       const updatedHistory = {
         title: userMessage.split(" ").slice(0, 5).join(" ").trim(),
         preview: aiMessage.split("\n").slice(0, 1).join(" ").trim(),
-        date: new Date().toLocaleDateString("en-US", { month: "short" })
+        date: formattedDate,
+        createdAt
       };
       await updateDoc(chatDocRef, updatedHistory);
     } catch (error: unknown) {
@@ -127,17 +138,24 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         userId,
         "chatHistory"
       );
+      const now = new Date();
+      const createdAt = Timestamp.fromDate(now);
+      const formattedDate = now.toLocaleString("en-US", {
+        day: "numeric",
+        month: "short",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+      });
       const newChat = {
         title: "New Chat",
         preview: "What's on your mind!",
-        date: new Date().toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric"
-        })
+        date: formattedDate,
+        createdAt
       };
 
       const docRef = await addDoc(chatHistoryCollection, newChat);
-      
+
       setCurrId(docRef.id);
     } catch (error: unknown) {
       if (error instanceof Error) console.log(error);

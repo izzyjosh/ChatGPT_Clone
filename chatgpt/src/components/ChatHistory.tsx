@@ -14,7 +14,9 @@ import {
   collection,
   onSnapshot,
   DocumentData,
-  QuerySnapshot
+  QuerySnapshot,
+  query,
+  orderBy
 } from "firebase/firestore";
 
 const ChatHistory = () => {
@@ -37,8 +39,10 @@ const ChatHistory = () => {
       "savedResponses"
     );
 
+    const chatQuery = query(chatCollectionRef, orderBy("createdAt", "asc"));
+
     const unsubscribeChats = onSnapshot(
-      chatCollectionRef,
+      chatQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
         const chatData: ChatHistoryEntry[] = snapshot.docs.map(doc => ({
           ...(doc.data() as Omit<ChatHistoryEntry, "id">),

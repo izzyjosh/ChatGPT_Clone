@@ -33,7 +33,7 @@ import {
   onSnapshot,
   query,
   orderBy,
-  Timestamp
+  serverTimestamp
 } from "firebase/firestore";
 import { db } from "../firebase.ts";
 
@@ -77,6 +77,9 @@ const ChatMessage = () => {
   const [inputText, setInputText] = useState<string>("");
   const [currentAIResponse, setCurrentAIResponse] =
     useState<ChatMessageType | null>(null);
+  const [newlyAddedMessages, setNewlyAddedMessages] = useState<
+    ChatMessageType[]
+  >([]);
   const [loading, setLoading] = useState<boolean>(false);
   const chatContainerRef = useRef(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -93,7 +96,6 @@ const ChatMessage = () => {
 
   useEffect(() => {
     if (userId && currId) {
-      setLoading(true);
       const chatCollectionRef = collection(
         db,
         "users",
@@ -102,20 +104,20 @@ const ChatMessage = () => {
         currId,
         "chats"
       );
-
-      const q = query(chatCollectionRef, orderBy("createdAt"));
+      const q = query(chatCollectionRef, orderBy("createdAt", "asc"));
 
       const unsubscribe = onSnapshot(q, snapshot => {
         const fetchedMessages = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as ChatMessageType[];
+
         setMessages(fetchedMessages);
       });
-      setLoading(false);
+
       return () => unsubscribe();
     }
-  }, [currId, userId]);
+  }, [userId, currId]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -126,7 +128,7 @@ const ChatMessage = () => {
   const handleSendMessage = async () => {
     if (inputText.trim()) {
       const now = new Date();
-      const createdAt = Timestamp.fromDate(now);
+
       const formattedDate = now.toLocaleString("en-US", {
         day: "numeric",
         month: "short",
@@ -139,28 +141,26 @@ const ChatMessage = () => {
         text: inputText,
         date: formattedDate,
         type: "User",
-        createdAt
+        createdAt: serverTimestamp()
       };
       setMessages(prev => [...prev, userMessage]);
       setInputText("");
 
-      setCurrentAIResponse({
-        text: "",
-        type: "AI",
-        date: formattedDate,
-        createdAt
-      });
-
       try {
         let fullText = "";
+
+        setCurrentAIResponse({
+          text: "",
+          type: "AI",
+          date: formattedDate,
+          createdAt: serverTimestamp()
+        });
 
         for await (const chunk of getGeminiResponse(inputText)) {
           fullText += chunk;
           setCurrentAIResponse(prev => ({
-            text: fullText,
-            type: "AI",
-            date: prev?.date ?? formattedDate,
-            createdAt: prev?.createdAt ?? createdAt
+            ...prev!,
+            text: fullText
           }));
         }
 
@@ -168,14 +168,12 @@ const ChatMessage = () => {
           text: fullText,
           type: "AI",
           date: formattedDate,
-          createdAt
+          createdAt: serverTimestamp()
         };
-
         setMessages(prev => [...prev, aiMessage]);
+        handleUpdateChat(userMessage);
+        handleUpdateChat(aiMessage);
         setCurrentAIResponse(null);
-
-        await handleUpdateChat(userMessage);
-        await handleUpdateChat(aiMessage);
       } catch (error: unknown) {
         const errorMessage = {
           text: `Sorry, something went wrong with the AI response: ${error}`,
@@ -184,8 +182,6 @@ const ChatMessage = () => {
           createdAt
         };
         setMessages(prev => [...prev, errorMessage]);
-        await handleUpdateChat(userMessage);
-        await handleUpdateChat(errorMessage);
       }
     }
   };
