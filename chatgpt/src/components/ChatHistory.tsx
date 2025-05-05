@@ -31,10 +31,10 @@ const ChatHistory = () => {
   useEffect(() => {
     if (!userId) return;
 
-    const chatCollectionRef = collection(db, "users", userId, "chatHistory");
+    const chatCollectionRef = collection(db, "Users", userId, "chatHistory");
     const savedCollectionRef = collection(
       db,
-      "users",
+      "Users",
       userId,
       "savedResponses"
     );

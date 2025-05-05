@@ -77,106 +77,104 @@ const Register = () => {
           </h2>
 
           {/* First and Last Name */}
-          <form>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="w-full md:w-1/2">
-                <label
-                  htmlFor="firstname"
-                  className="block text-sm font-medium mb-1"
-                >
-                  First name
-                </label>
-                <input
-                  id="firstname"
-                  type="text"
-                  value={user.firstName}
-                  onChange={handleFirstNameChange}
-                  placeholder="Enter your first name"
-                  className="w-full border border-gray px-3 py-2 rounded-md shadow-sm focus:outline-none focus:border-mint"
-                />
-              </div>
-              <div className="w-full md:w-1/2">
-                <label
-                  htmlFor="lastname"
-                  className="block text-sm font-medium mb-1"
-                >
-                  Last name
-                </label>
-                <input
-                  id="lastname"
-                  type="text"
-                  value={user.lastName}
-                  onChange={handleLastNameChange}
-                  placeholder="Enter your last name"
-                  className="w-full border border-gray px-3 py-2 rounded-md shadow-sm focus:outline-none focus:border-mint"
-                />
-              </div>
-            </div>
 
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1">
-                Email
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="w-full md:w-1/2">
+              <label
+                htmlFor="firstname"
+                className="block text-sm font-medium mb-1"
+              >
+                First name
               </label>
               <input
-                id="email"
-                type="email"
-                value={user.email}
-                onChange={handleEmailChange}
-                placeholder="Enter your email"
+                id="firstname"
+                type="text"
+                value={user.firstName}
+                onChange={handleFirstNameChange}
+                placeholder="Enter your first name"
                 className="w-full border border-gray px-3 py-2 rounded-md shadow-sm focus:outline-none focus:border-mint"
               />
             </div>
-
-            {/* Password */}
-            <div>
+            <div className="w-full md:w-1/2">
               <label
-                htmlFor="password"
+                htmlFor="lastname"
                 className="block text-sm font-medium mb-1"
               >
-                Password
+                Last name
               </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type="password"
-                  value={user.password}
-                  onChange={handlePasswordChange}
-                  placeholder="Create password"
-                  className="w-full border border-gray px-3 py-2 rounded-md shadow-sm focus:outline-none focus:border-mint"
-                />
-                <span className="absolute right-3 top-2.5 text-gray-400 cursor-pointer">
-                  {/* Add icon here if needed */}
-                  &#128065;
-                </span>
-              </div>
+              <input
+                id="lastname"
+                type="text"
+                value={user.lastName}
+                onChange={handleLastNameChange}
+                placeholder="Enter your last name"
+                className="w-full border border-gray px-3 py-2 rounded-md shadow-sm focus:outline-none focus:border-mint"
+              />
             </div>
+          </div>
 
-            {/* Terms Checkbox */}
-            <div className="flex items-center">
-              <input id="terms" type="checkbox" className="h-4 w-4 rounded" />
-              <label htmlFor="terms" className="ml-2 text-sm text-gray">
-                I agree with{"  "}
-                <a href="#" className="text-yellow underline">
-                  Terms
-                </a>
-                {"  "}
-                and{"  "}
-                <a href="#" className="text-yellow underline">
-                  Privacy Policy
-                </a>
-              </label>
-            </div>
-
-            {/* Submit Button */}
-
-            <LoadButton
-              name={"create account"}
-              loading={loading}
-              handleClick={() => handleSignup
-}
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium mb-1">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={user.email}
+              onChange={handleEmailChange}
+              placeholder="Enter your email"
+              className="w-full border border-gray px-3 py-2 rounded-md shadow-sm focus:outline-none focus:border-mint"
             />
-          </form>
+          </div>
+
+          {/* Password */}
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium mb-1"
+            >
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                type="password"
+                value={user.password}
+                onChange={handlePasswordChange}
+                placeholder="Create password"
+                className="w-full border border-gray px-3 py-2 rounded-md shadow-sm focus:outline-none focus:border-mint"
+              />
+              <span className="absolute right-3 top-2.5 text-gray-400 cursor-pointer">
+                {/* Add icon here if needed */}
+                &#128065;
+              </span>
+            </div>
+          </div>
+
+          {/* Terms Checkbox */}
+          <div className="flex items-center">
+            <input id="terms" type="checkbox" className="h-4 w-4 rounded" />
+            <label htmlFor="terms" className="ml-2 text-sm text-gray">
+              I agree with{"  "}
+              <a href="#" className="text-yellow underline">
+                Terms
+              </a>
+              {"  "}
+              and{"  "}
+              <a href="#" className="text-yellow underline">
+                Privacy Policy
+              </a>
+            </label>
+          </div>
+
+          {/* Submit Button */}
+
+          <LoadButton
+            name={"create account"}
+            loading={loading}
+            handleClick={handleSignup}
+          />
 
           {/* OR divider */}
           <div className="flex items-center justify-center gap-2 text-gray-400">
@@ -184,18 +182,6 @@ const Register = () => {
             <span className="text-sm">OR</span>
             <hr className="w-1/4" />
           </div>
-
-          {/* Google Sign Up */}
-          <button className="w-full flex items-center justify-center gap-2 border-gray border-2 py-2 px-4 rounded-md shadow-sm hover:bg-black">
-            <img
-              src="https://www.svgrepo.com/show/475656/google-color.svg"
-              alt="Google"
-              className="h-5 w-5"
-            />
-            <span className="text-sm font-medium text-black hover:text-white">
-              Sign up with Google
-            </span>
-          </button>
 
           {/* Login Redirect */}
           <p className="text-sm text-center">

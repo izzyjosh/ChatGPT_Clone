@@ -58,10 +58,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const handleUpdateChat = async (message: ChatMessageType) => {
     if (!userId || !currId) return;
     try {
-      const chatDocRef = doc(db, "users", userId, "chatHistory", currId);
+      const chatDocRef = doc(db, "Users", userId, "chatHistory", currId);
       const chatCollectionRef = collection(
         db,
-        "users",
+        "Users",
         userId,
         "chatHistory",
         currId,
@@ -70,7 +70,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       await addDoc(chatCollectionRef, message);
 
       const userQuerySnap = await getDocs(
-        query(chatCollectionRef, where("type", "==", "user"), limit(1))
+        query(chatCollectionRef, where("type", "==", "User"), limit(1))
       );
       const aiQuerySnap = await getDocs(
         query(chatCollectionRef, where("type", "==", "AI"), limit(1))
@@ -117,7 +117,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
       const messageRef = doc(
         db,
-        "users",
+        "Users",
         userId,
         "savedMessages",
         Date.now().toString()
@@ -134,7 +134,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     try {
       const chatHistoryCollection = collection(
         db,
-        "users",
+        "Users",
         userId,
         "chatHistory"
       );

@@ -98,7 +98,7 @@ const ChatMessage = () => {
     if (userId && currId) {
       const chatCollectionRef = collection(
         db,
-        "users",
+        "Users",
         userId,
         "chatHistory",
         currId,
@@ -171,6 +171,7 @@ const ChatMessage = () => {
           createdAt: serverTimestamp()
         };
         setMessages(prev => [...prev, aiMessage]);
+        
         handleUpdateChat(userMessage);
         handleUpdateChat(aiMessage);
         setCurrentAIResponse(null);
