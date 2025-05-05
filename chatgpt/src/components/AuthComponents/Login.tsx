@@ -27,7 +27,6 @@ const Login = () => {
   const handlePasswordChange = (e: eventT) => {
     setUser({ ...user, password: e.target.value });
   };
-
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -37,6 +36,7 @@ const Login = () => {
         user.email,
         user.password
       );
+
       const activeUser = userCredential.user;
       if (activeUser) {
         toast.success("Login successfully");

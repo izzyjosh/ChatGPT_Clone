@@ -3,7 +3,7 @@ import Loader from "./icons/Loader";
 type ButtonProps = {
   name: string;
   loading: boolean;
-  handleClick: () => {};
+  handleClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
 };
 
 const LoadButton = ({ name, loading, handleClick }: ButtonProps) => {

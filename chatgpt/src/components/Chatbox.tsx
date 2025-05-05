@@ -77,10 +77,7 @@ const ChatMessage = () => {
   const [inputText, setInputText] = useState<string>("");
   const [currentAIResponse, setCurrentAIResponse] =
     useState<ChatMessageType | null>(null);
-  const [newlyAddedMessages, setNewlyAddedMessages] = useState<
-    ChatMessageType[]
-  >([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading] = useState<boolean>(false);
   const chatContainerRef = useRef(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -137,7 +134,7 @@ const ChatMessage = () => {
         hour12: true
       });
 
-      const userMessage = {
+      const userMessage: ChatMessageType = {
         text: inputText,
         date: formattedDate,
         type: "User",
@@ -154,7 +151,7 @@ const ChatMessage = () => {
           type: "AI",
           date: formattedDate,
           createdAt: serverTimestamp()
-        });
+        } as ChatMessageType);
 
         for await (const chunk of getGeminiResponse(inputText)) {
           fullText += chunk;
@@ -164,23 +161,23 @@ const ChatMessage = () => {
           }));
         }
 
-        const aiMessage = {
+        const aiMessage: ChatMessageType = {
           text: fullText,
           type: "AI",
           date: formattedDate,
           createdAt: serverTimestamp()
         };
         setMessages(prev => [...prev, aiMessage]);
-        
+
         handleUpdateChat(userMessage);
         handleUpdateChat(aiMessage);
         setCurrentAIResponse(null);
       } catch (error: unknown) {
-        const errorMessage = {
+        const errorMessage: ChatMessageType = {
           text: `Sorry, something went wrong with the AI response: ${error}`,
           type: "AI",
           date: formattedDate,
-          createdAt
+          createdAt: serverTimestamp()
         };
         setMessages(prev => [...prev, errorMessage]);
       }
@@ -214,6 +211,7 @@ const ChatMessage = () => {
               ) : (
                 <AIResponse
                   key={message.id ?? message.date + message.type}
+                  messageContent={message}
                   chattext={message.text}
                   date={message.date}
                   handleSave={handleSave}
@@ -299,17 +297,22 @@ const UserMessage = ({ chattext, date }: UserMessageProp) => {
 };
 
 interface AIResponseProp {
-  handleSave: (message: string) => void;
+  handleSave: (message: ChatMessageType) => void;
   chattext: string;
   date: string;
+  messageContent: ChatMessageType;
 }
-const AIResponse = ({ handleSave, chattext, date }: AIResponseProp) => {
+const AIResponse = ({
+  handleSave,
+  chattext,
+  date,
+  messageContent
+}: AIResponseProp) => {
   const [saved, setSaved] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
 
-  const message: string = chattext;
-  const handleSaved = (message: string) => {
+  const handleSaved = (message: ChatMessageType) => {
     handleSave(message);
     setSaved(!saved);
   };
@@ -344,7 +347,7 @@ const AIResponse = ({ handleSave, chattext, date }: AIResponseProp) => {
       </div>
       <div className="bg-mint dark:bg-tetaccent ml-[21px] p-5 text-sm rounded-md inline-block w-[calc(100%-21px)] leading-6 prose dark:prose-invert custom-prose">
         <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-          {message}
+          {chattext}
         </Markdown>
         <div className="flex justify-between items-center mt-3">
           <div className="flex gap-3 bg-darkmint text-[12px] dark:bg-darkaccent rounded-full p-1">
@@ -365,7 +368,7 @@ const AIResponse = ({ handleSave, chattext, date }: AIResponseProp) => {
               <span className="hidden sm:inline">Generate response</span>
             </button>
             <button
-              onClick={() => handleCopy(message)}
+              onClick={() => handleCopy(chattext)}
               className="px-2 py-1 rounded-lg bg-darkmint dark:bg-darkaccent"
             >
               <MdContentCopy className="inline" />{" "}
@@ -374,7 +377,7 @@ const AIResponse = ({ handleSave, chattext, date }: AIResponseProp) => {
               </span>
             </button>
             <button
-              onClick={() => handleSaved(message)}
+              onClick={() => handleSaved(messageContent)}
               disabled={saved}
               className="px-2 py-1 rounded-lg bg-darkmint dark:bg-darkaccent dark:disabled:bg-gray disabled:bg-green disabled:text-mint"
             >

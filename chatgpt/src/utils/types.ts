@@ -1,11 +1,11 @@
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, FieldValue} from "firebase/firestore";
 
 export type ChatMessageType = {
   id?: string;
   text: string;
   date: string;
   type: "User" | "AI";
-  createdAt: Timestamp;
+  createdAt: Timestamp | FieldValue;
 };
 
 export interface BaseChatEntry {
